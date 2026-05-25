@@ -378,6 +378,37 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .rank-name { flex:1; font-size:12px; font-weight:500; }
   .rank-val { font-size:12px; font-weight:700; color:var(--blue-mid); }
 
+
+  /* ── HOURS EDITOR NEW COLS ── */
+  .inp-date { width:106px; border:1px solid transparent; border-radius:6px; padding:4px 5px; font-size:11px; font-family:inherit; background:transparent; }
+  .inp-date:focus { border-color:#3B82F6; background:#fff; outline:none; }
+  .resp-sel { font-size:11px; border-left:3px solid #2563EB; }
+  .ok-label { display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .ok-label input { display:none; }
+  .ok-check { width:22px; height:22px; border:2px solid #D1D5DB; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#16A34A; transition:all .15s; cursor:pointer; }
+  .ok-label input:checked + .ok-check { background:#DCFCE7; border-color:#16A34A; }
+  /* ── GANTT ── */
+  .gantt-wrap { min-width:700px; }
+  .gantt-head-row { display:flex; border-bottom:2px solid var(--border); background:#F8FAFC; }
+  .gantt-timeline-head { position:relative; flex:1; height:28px; }
+  .gantt-month-label { position:absolute; top:0; height:28px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--text-muted); border-right:1px solid var(--border); text-transform:uppercase; letter-spacing:.3px; }
+  .gantt-mod-header { padding:6px 10px; background:#F1F5F9; font-size:11px; font-weight:700; color:var(--blue-dark); border-bottom:1px solid var(--border); border-top:2px solid var(--border); padding-left:14px; }
+  .gantt-row { display:flex; border-bottom:1px solid #F0F0F0; }
+  .gantt-row-even { background:#FAFAFA; }
+  .gantt-row:hover { background:#EFF6FF; }
+  .gantt-label { flex-shrink:0; display:flex; align-items:center; gap:6px; padding:0 8px; border-right:1px solid var(--border); height:36px; }
+  .gantt-ok-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .gantt-label-text { font-size:11px; color:var(--text); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .gantt-timeline { position:relative; flex:1; }
+  .gantt-month-col { position:absolute; top:0; height:100%; border-right:1px solid #F0F0F0; pointer-events:none; }
+  .gantt-bar { position:absolute; top:6px; height:24px; border-radius:4px; display:flex; align-items:center; min-width:4px; cursor:pointer; transition:opacity .15s; }
+  .gantt-bar:hover { opacity:1 !important; filter:brightness(1.1); }
+  .gantt-bar-label { font-size:9px; font-weight:700; color:#fff; padding:0 5px; white-space:nowrap; overflow:hidden; }
+  .gantt-today-line { position:absolute; top:0; height:100%; width:2px; background:#DC2626; z-index:5; opacity:.7; pointer-events:none; }
+  .gantt-legend { display:flex; gap:1.5rem; flex-wrap:wrap; padding:10px 0 4px; margin-top:8px; border-top:1px solid var(--border); }
+  .gantt-leg-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); }
+  .gantt-leg-dot { width:12px; height:12px; border-radius:3px; }
+
 </style>
 </head>
 <body>
@@ -398,6 +429,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <div class="nav-tab" onclick="showTab('separacao')" id="tab-separacao"><span class="dot"></span>Acompanhamento de Separação</div>
   <div class="nav-tab" onclick="showTab('dash-rec')" id="tab-dash-rec"><span class="dot"></span>📊 Dashboard Recebimento</div>
   <div class="nav-tab" onclick="showTab('dash-sep')" id="tab-dash-sep"><span class="dot"></span>📦 Dashboard Separação</div>
+  <div class="nav-tab" onclick="showTab('gantt')" id="tab-gantt"><span class="dot"></span>📅 Cronograma</div>
 </nav>
 
 <main class="main">
@@ -409,16 +441,15 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
     <!-- Top bar -->
     <div class="capa-topbar">
-      <div class="capa-sistema-badge">Sankhya OM</div>
-      <div class="capa-version-badge" id="capa-version-display">v0.2 — Esboço</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="capa-sistema-badge">Sankhya OM</div>
+        <div class="capa-version-badge" id="capa-version-display">v0.2 — Esboço</div>
+      </div>
     </div>
 
     <!-- Main title block -->
     <div class="capa-title-block">
-      <div class="capa-company">
-        <span class="capa-company-icon">🏭</span>
-        <span contenteditable="true" id="capa-company" class="capa-editable-field" title="Clique para editar">Casa da Borracha</span>
-      </div>
+      <div class="capa-company"><span class="capa-company-icon">🏭</span><span contenteditable="true" id="capa-company" class="capa-editable-field" title="Clique para editar">Casa da Borracha</span></div>
       <h1 class="capa-titulo" contenteditable="true" id="capa-titulo" title="Clique para editar">Revitalização do Processo Logístico</h1>
       <p class="capa-subtitulo" contenteditable="true" id="capa-subtitulo" title="Clique para editar">Escopo de implantação — Recebimento e Expedição com Sankhya OM</p>
     </div>
@@ -485,7 +516,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
     </div>
 
     <!-- Aviso -->
-    <div class="capa-aviso">
+        <div class="capa-aviso">
       <strong>⚠ Documento preliminar:</strong> Este escopo está em fase de elaboração. As estimativas de horas são preliminares e serão revisadas após o kickoff oficial do projeto.
     </div>
 
@@ -2182,17 +2213,42 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   </div>
 
 </div><!-- /dash-sep -->
+<div id="page-gantt" class="section-page">
+  <div class="page-hero">
+    <div class="hero-icon" style="background:#F3E8FF">📅</div>
+    <div>
+      <h1>Cronograma — Gantt</h1>
+      <p>Gerado automaticamente a partir das datas inseridas na aba <strong>Est. de Horas</strong>. Cada barra representa uma atividade. Marque o <em>OK Cliente</em> nas atividades para acompanhar os critérios de aceite.</p>
+    </div>
+  </div>
+
+  <!-- Aceite summary -->
+  <div class="metric-cards" style="margin-bottom:1.5rem">
+    <div class="metric-card"><div class="metric-label">Total do Projeto</div><div class="metric-value" id="tot-total-gantt" style="color:#EA580C">160h</div></div>
+    <div class="metric-card"><div class="metric-label">Critérios de Aceite</div><div class="metric-value" id="tot-aceite" style="color:#DC2626">0%</div><div style="margin-top:6px;height:6px;background:#F0F0F0;border-radius:20px;overflow:hidden"><div id="aceite-bar-fill" style="height:100%;background:#16A34A;border-radius:20px;width:0%;transition:width .4s"></div></div></div>
+    <div class="metric-card"><div class="metric-label">Atividades aprovadas</div><div class="metric-value" id="tot-ok-ct" style="color:#16A34A">0</div><div class="metric-sub" id="tot-ok-total">de 0 atividades</div></div>
+    <div class="metric-card"><div class="metric-label">Período do projeto</div><div class="metric-value" style="font-size:14px;color:#1A3E6E" id="gantt-period">—</div></div>
+  </div>
+
+  <div class="info-box" style="margin-bottom:1rem">
+    <strong>💡 Como usar:</strong> Edite as datas na aba <strong>Est. de Horas</strong> e volte aqui — o Gantt atualiza automaticamente. Marque ✓ OK Cliente em cada atividade concluída para avançar o percentual de aceite.
+  </div>
+
+  <div id="gantt-container" style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem;overflow-x:auto">
+    <div style="text-align:center;padding:2rem;color:var(--text-muted)">Carregando cronograma...</div>
+  </div>
+</div><!-- /gantt -->
 </main>
 
 <script>
 // ─── STATUS INFO ───
 const statusTexts = {
-  waiting: '📋 Nota/pedido aguardando que um conferente inicie a contagem. Nenhuma ação ainda foi tomada.',
-  progress: '🔄 Um conferente já iniciou a leitura dos itens. A conferência está em curso.',
-  cut:      '✂️ Sistema identificou divergência de quantidade. Aguardando supervisor liberar o corte.',
-  recount:  '🔁 Foi solicitada nova contagem para dirimir divergência.',
-  recount2: '🔁 Recontagem em execução pelo operador.',
-  done:     '✅ Conferência concluída e aprovada. Documento confirmado no sistema.'
+  waiting:'📋 Nota/pedido aguardando que um conferente inicie a contagem.',
+  progress:'🔄 Um conferente já iniciou a leitura dos itens.',
+  cut:'✂️ Divergência identificada. Aguardando supervisor liberar o corte.',
+  recount:'🔁 Nova contagem solicitada.',
+  recount2:'🔁 Recontagem em execução.',
+  done:'✅ Conferência concluída e aprovada.'
 };
 function showStatusInfo(k) {
   const el = document.getElementById('status-info');
@@ -2213,6 +2269,7 @@ function showTab(id) {
   if (id === 'separacao') renderSepTable();
   if (id === 'dash-rec') initDashRec();
   if (id === 'dash-sep') initDashSep();
+  if (id === 'gantt')    renderGantt();
 }
 
 // ─── ACCORDION ───
@@ -2230,60 +2287,59 @@ function updateStatusBadge(val) {
 document.addEventListener('DOMContentLoaded', () => {
   const dataEl = document.getElementById('capa-data');
   if (dataEl && !dataEl.textContent.trim()) {
-    const d = new Date();
-    dataEl.textContent = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    dataEl.textContent = new Date().toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
   }
 });
 
 // ─── HOURS EDITOR ───
-const STORAGE_KEY = 'cb_horas_v1';
+const STORAGE_KEY = 'cb_horas_v2';
+
+const RESP_OPTIONS = ['Consultor','TI-Cliente','TI+Consultoria','Diretoria Cliente'];
+const RESP_COLORS  = { 'Consultor':'#2563EB', 'TI-Cliente':'#16A34A', 'TI+Consultoria':'#7C3AED', 'Diretoria Cliente':'#DC2626' };
 
 const DEFAULT_DATA = {
   modulos: [
     {
-      id: 'mod_rec', title: 'Módulo 1 — Recebimento', color: '#2563EB',
-      rows: [
-        { id:'r1', ativ:'Levantamento e mapeamento do processo atual (recebimento)', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'r2', ativ:'Configuração da Fila de Conferência no Sankhya OM', perfil:'Consultor', prio:'Alta', horas:12 },
-        { id:'r3', ativ:'Parametrização da conferência cega (regras, tolerâncias, fluxos)', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'r4', ativ:'Configuração impressão automática de etiquetas na entrada de NF', perfil:'Consultor', prio:'Alta', horas:10 },
-        { id:'r5', ativ:'Cadastro e higienização de SKUs sem código de barras', perfil:'Analista', prio:'Alta', horas:16 },
-        { id:'r6', ativ:'Testes integrados do fluxo de recebimento', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'r7', ativ:'Treinamento — equipe de recebimento', perfil:'Consultor', prio:'Média', horas:4 },
-        { id:'r8', ativ:'Documentação do processo implantado (recebimento)', perfil:'Analista', prio:'Média', horas:4 },
-        { id:'r9', ativ:'Acompanhamento pós go-live — recebimento', perfil:'Consultor', prio:'Baixa', horas:8 }
+      id:'mod_rec', title:'Módulo 1 — Recebimento', color:'#2563EB',
+      rows:[
+        {id:'r1', ativ:'Levantamento e mapeamento do processo atual (recebimento)', resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-06-02', dt_fim:'2025-06-06', ok:false},
+        {id:'r2', ativ:'Configuração da Fila de Conferência no Sankhya OM',         resp:'TI+Consultoria', prio:'Alta', horas:12, dt_ini:'2025-06-09', dt_fim:'2025-06-16', ok:false},
+        {id:'r3', ativ:'Parametrização da conferência cega (regras, tolerâncias)',  resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-06-09', dt_fim:'2025-06-13', ok:false},
+        {id:'r4', ativ:'Configuração de impressão automática de etiquetas na NF',   resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-06-16', dt_fim:'2025-06-20', ok:false},
+        {id:'r5', ativ:'Cadastro e higienização de SKUs sem código de barras',      resp:'TI-Cliente', prio:'Alta', horas:16, dt_ini:'2025-06-09', dt_fim:'2025-06-27', ok:false},
+        {id:'r6', ativ:'Testes integrados do fluxo de recebimento',                 resp:'TI+Consultoria', prio:'Alta', horas:8,  dt_ini:'2025-06-23', dt_fim:'2025-06-27', ok:false},
+        {id:'r7', ativ:'Treinamento — equipe de recebimento',                       resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-01', ok:false},
+        {id:'r8', ativ:'Documentação do processo implantado (recebimento)',         resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-04', ok:false},
+        {id:'r9', ativ:'Acompanhamento pós go-live — recebimento',                  resp:'Consultor', prio:'Baixa', horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-18', ok:false},
       ]
     },
     {
-      id: 'mod_exp', title: 'Módulo 2 — Expedição', color: '#EA580C',
-      rows: [
-        { id:'e1', ativ:'Levantamento e mapeamento do processo de expedição (balcão + entrega)', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'e2', ativ:'Configuração Situação Logística (4 estágios + acompanhamento)', perfil:'Consultor', prio:'Alta', horas:12 },
-        { id:'e3', ativ:'Configuração Fila de Conferência — expedição (TOP + conf. conferência)', perfil:'Consultor', prio:'Alta', horas:10 },
-        { id:'e4', ativ:'Parametrização conferência NF Venda (Antes da confirmação)', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'e5', ativ:'Configuração formação de volumes + etiqueta de volume detalhada', perfil:'Consultor', prio:'Alta', horas:10 },
-        { id:'e6', ativ:'Configuração portal de vendas — acompanhamento situação logística', perfil:'Consultor', prio:'Média', horas:10 },
-        { id:'e7', ativ:'Testes integrados — fluxo de expedição (balcão e entrega)', perfil:'Consultor', prio:'Alta', horas:8 },
-        { id:'e8', ativ:'Treinamento — equipe de expedição e vendedores', perfil:'Consultor', prio:'Média', horas:6 },
-        { id:'e9', ativ:'Documentação do processo implantado (expedição)', perfil:'Analista', prio:'Média', horas:4 },
-        { id:'e10', ativ:'Acompanhamento pós go-live — expedição', perfil:'Consultor', prio:'Baixa', horas:6 }
+      id:'mod_exp', title:'Módulo 2 — Expedição', color:'#EA580C',
+      rows:[
+        {id:'e1', ativ:'Levantamento e mapeamento do processo de expedição',         resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-11', ok:false},
+        {id:'e2', ativ:'Configuração Situação Logística (4 estágios)',               resp:'TI+Consultoria', prio:'Alta', horas:12, dt_ini:'2025-07-14', dt_fim:'2025-07-18', ok:false},
+        {id:'e3', ativ:'Configuração Fila de Conferência — expedição',               resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-07-14', dt_fim:'2025-07-21', ok:false},
+        {id:'e4', ativ:'Parametrização conferência NF Venda (Antes da confirmação)', resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-07-21', dt_fim:'2025-07-25', ok:false},
+        {id:'e5', ativ:'Configuração formação de volumes + etiqueta de volume',      resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-07-21', dt_fim:'2025-07-28', ok:false},
+        {id:'e6', ativ:'Configuração portal de vendas — situação logística',         resp:'TI+Consultoria', prio:'Média', horas:10, dt_ini:'2025-07-28', dt_fim:'2025-08-01', ok:false},
+        {id:'e7', ativ:'Testes integrados — fluxo de expedição (balcão e entrega)',  resp:'TI+Consultoria', prio:'Alta', horas:8,  dt_ini:'2025-08-04', dt_fim:'2025-08-08', ok:false},
+        {id:'e8', ativ:'Treinamento — equipe de expedição e vendedores',             resp:'Consultor', prio:'Média', horas:6,  dt_ini:'2025-08-11', dt_fim:'2025-08-12', ok:false},
+        {id:'e9', ativ:'Documentação do processo implantado (expedição)',            resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-08-11', dt_fim:'2025-08-15', ok:false},
+        {id:'e10',ativ:'Acompanhamento pós go-live — expedição',                    resp:'Consultor', prio:'Baixa', horas:6,  dt_ini:'2025-08-18', dt_fim:'2025-08-29', ok:false},
       ]
     }
   ]
 };
 
-let horasData = null;
+let horasData  = null;
 let horasInited = false;
 
 function loadData() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    horasData = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
-  } catch(e) {
-    horasData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  }
+    const s = localStorage.getItem(STORAGE_KEY);
+    horasData = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  } catch(e) { horasData = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
-
 function saveData() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(horasData));
@@ -2291,75 +2347,78 @@ function saveData() {
     if (s) s.textContent = '💾 Salvo — ' + new Date().toLocaleTimeString('pt-BR');
   } catch(e) {}
 }
-
-function uid() { return 'x' + Math.random().toString(36).slice(2, 9); }
-
-function prioClass(p) {
-  if (p === 'Alta')  return 'prio-alta-s';
-  if (p === 'Média') return 'prio-media-s';
-  return 'prio-baixa-s';
-}
-
-function escH(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function hexAlpha(hex, a) {
-  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+function uid() { return 'x' + Math.random().toString(36).slice(2,9); }
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hexAlpha(hex,a) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   return 'rgba('+r+','+g+','+b+','+a+')';
+}
+function prioClass(p) { return p==='Alta'?'prio-alta-s':p==='Média'?'prio-media-s':'prio-baixa-s'; }
+
+function allRows() {
+  return horasData.modulos.flatMap(m => m.rows);
+}
+function acceptancePct() {
+  const rows = allRows();
+  if (!rows.length) return 0;
+  return Math.round(rows.filter(r => r.ok).length / rows.length * 100);
 }
 
 function renderAll() {
   const container = document.getElementById('modulos-container');
   if (!container) return;
   container.innerHTML = '';
-  horasData.modulos.forEach((mod) => {
-    const sub = mod.rows.reduce((s, r) => s + (Number(r.horas)||0), 0);
+  horasData.modulos.forEach(mod => {
+    const sub  = mod.rows.reduce((s,r) => s+(Number(r.horas)||0), 0);
+    const okCt = mod.rows.filter(r=>r.ok).length;
     const block = document.createElement('div');
     block.className = 'modulo-block';
     block.id = 'block_' + mod.id;
-    const rowsHtml = mod.rows.map((row, ri) => `
-      <tr>
-        <td style="width:32px;color:#94A3B8;font-size:12px;text-align:center">${ri+1}</td>
-        <td><input class="inp-ativ" value="${escH(row.ativ)}" onchange="updateRow('${mod.id}','${row.id}','ativ',this.value)" placeholder="Descrição da atividade..." /></td>
-        <td>
-          <select class="inp-sel" onchange="updateRow('${mod.id}','${row.id}','perfil',this.value)">
-            <option${row.perfil==='Consultor'?' selected':''}>Consultor</option>
-            <option${row.perfil==='Analista'?' selected':''}>Analista</option>
-            <option${row.perfil==='Gestor'?' selected':''}>Gestor</option>
-            <option${row.perfil==='Cliente'?' selected':''}>Cliente</option>
-          </select>
-        </td>
-        <td>
-          <select class="inp-sel prio-sel ${prioClass(row.prio)}" onchange="updateRow('${mod.id}','${row.id}','prio',this.value);this.className='inp-sel prio-sel '+prioClass(this.value)">
-            <option${row.prio==='Alta'?' selected':''}>Alta</option>
-            <option${row.prio==='Média'?' selected':''}>Média</option>
-            <option${row.prio==='Baixa'?' selected':''}>Baixa</option>
-          </select>
-        </td>
-        <td><input class="inp-horas" type="number" min="0" step="0.5" value="${row.horas}" onchange="updateRow('${mod.id}','${row.id}','horas',this.value)" /></td>
-        <td><button class="btn-del-row" onclick="deleteRow('${mod.id}','${row.id}')" title="Remover">✕</button></td>
-      </tr>`).join('');
 
-    block.innerHTML = `
-      <div class="modulo-header">
-        <div class="modulo-color-dot" style="background:${mod.color}"></div>
-        <input class="modulo-title-input" value="${escH(mod.title)}" onchange="updateModTitle('${mod.id}',this.value)" />
-        <span class="modulo-subtotal" style="background:${hexAlpha(mod.color,0.12)};color:${mod.color}">${sub}h</span>
-        <button class="btn-del-mod" onclick="deleteModule('${mod.id}')">✕ Remover</button>
-      </div>
-      <table class="hours-editor-table">
-        <thead><tr>
-          <th style="width:32px">#</th>
-          <th>Atividade / Entregável</th>
-          <th style="width:110px">Perfil</th>
-          <th style="width:95px">Prioridade</th>
-          <th style="width:80px">Horas</th>
-          <th style="width:36px"></th>
-        </tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-      <button class="btn-add-row" onclick="addRow('${mod.id}')">+ Adicionar atividade</button>`;
+    const rowsHtml = mod.rows.map((row,ri) => {
+      const respOpts = RESP_OPTIONS.map(o =>
+        '<option' + (row.resp===o?' selected':'') + '>' + o + '</option>'
+      ).join('');
+      const prioOpts = ['Alta','Média','Baixa'].map(o =>
+        '<option' + (row.prio===o?' selected':'') + '>' + o + '</option>'
+      ).join('');
+      return '<tr id="tr_'+row.id+'">'
+        + '<td style="width:28px;color:#94A3B8;font-size:11px;text-align:center">' + (ri+1) + '</td>'
+        + '<td><input class="inp-ativ" value="'+escH(row.ativ)+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'ativ\',this.value)" placeholder="Descrição..." /></td>'
+        + '<td><select class="inp-sel resp-sel" style="border-left:3px solid '+RESP_COLORS[row.resp]+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'resp\',this.value);this.style.borderLeftColor=RESP_COLORS[this.value]">'+respOpts+'</select></td>'
+        + '<td><select class="inp-sel prio-sel '+prioClass(row.prio)+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'prio\',this.value);this.className=\'inp-sel prio-sel \'+prioClass(this.value)">'+prioOpts+'</select></td>'
+        + '<td><input class="inp-date" type="date" value="'+(row.dt_ini||'')+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'dt_ini\',this.value)" /></td>'
+        + '<td><input class="inp-date" type="date" value="'+(row.dt_fim||'')+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'dt_fim\',this.value)" /></td>'
+        + '<td><input class="inp-horas" type="number" min="0" step="0.5" value="'+row.horas+'" onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'horas\',this.value)" /></td>'
+        + '<td style="text-align:center"><label class="ok-label"><input type="checkbox" '+(row.ok?'checked':'')+' onchange="updateRow(\''+mod.id+'\',\''+row.id+'\',\'ok\',this.checked)" /><span class="ok-check">'+(row.ok?'✓':'')+'</span></label></td>'
+        + '<td><button class="btn-del-row" onclick="deleteRow(\''+mod.id+'\',\''+row.id+'\')">✕</button></td>'
+        + '</tr>';
+    }).join('');
+
+    block.innerHTML =
+      '<div class="modulo-header">'
+        + '<div class="modulo-color-dot" style="background:'+mod.color+'"></div>'
+        + '<input class="modulo-title-input" value="'+escH(mod.title)+'" onchange="updateModTitle(\''+mod.id+'\',this.value)" />'
+        + '<span class="modulo-subtotal" style="background:'+hexAlpha(mod.color,0.12)+';color:'+mod.color+'">'+sub+'h</span>'
+        + '<span style="font-size:11px;background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:20px;margin-left:6px">✓ '+okCt+'/'+mod.rows.length+'</span>'
+        + '<button class="btn-del-mod" onclick="deleteModule(\''+mod.id+'\')">✕ Remover</button>'
+      + '</div>'
+      + '<div style="overflow-x:auto"><table class="hours-editor-table">'
+        + '<thead><tr>'
+          + '<th style="width:28px">#</th>'
+          + '<th>Atividade / Entregável</th>'
+          + '<th style="width:140px">Responsável</th>'
+          + '<th style="width:85px">Prioridade</th>'
+          + '<th style="width:115px">Dt. Início</th>'
+          + '<th style="width:115px">Dt. Fim</th>'
+          + '<th style="width:70px">Horas</th>'
+          + '<th style="width:56px;text-align:center">OK Cliente</th>'
+          + '<th style="width:32px"></th>'
+        + '</tr></thead>'
+        + '<tbody>' + rowsHtml + '</tbody>'
+      + '</table></div>'
+      + '<button class="btn-add-row" onclick="addRow(\''+mod.id+'\')">+ Adicionar atividade</button>';
+
     container.appendChild(block);
   });
   updateTotals();
@@ -2368,347 +2427,423 @@ function renderAll() {
 function updateTotals() {
   let grand = 0;
   const extra = [];
-  horasData.modulos.forEach((mod, i) => {
+  horasData.modulos.forEach((mod,i) => {
     const sub = mod.rows.reduce((s,r) => s+(Number(r.horas)||0), 0);
     grand += sub;
-    if      (i === 0) { const e=document.getElementById('tot-rec'); if(e) e.textContent=sub+'h'; }
-    else if (i === 1) { const e=document.getElementById('tot-exp'); if(e) e.textContent=sub+'h'; }
-    else extra.push({ title: mod.title, val: sub, color: mod.color });
+    if      (i===0) { const e=document.getElementById('tot-rec'); if(e) e.textContent=sub+'h'; }
+    else if (i===1) { const e=document.getElementById('tot-exp'); if(e) e.textContent=sub+'h'; }
+    else extra.push({title:mod.title,val:sub,color:mod.color});
   });
   const totEl = document.getElementById('tot-total');
   if (totEl) totEl.textContent = grand + 'h';
   const extEl = document.getElementById('extra-totals');
   if (extEl) extEl.innerHTML = extra.map(e =>
-    `<div style="margin-bottom:4px"><div style="font-size:11px;color:var(--text-muted)">${escH(e.title)}</div><div style="font-size:18px;font-weight:700;color:${e.color}">${e.val}h</div></div>`
+    '<div><div style="font-size:11px;color:var(--text-muted)">'+escH(e.title)+'</div><div style="font-size:18px;font-weight:700;color:'+e.color+'">'+e.val+'h</div></div>'
   ).join('');
+  const pct = acceptancePct();
+  const pctEl = document.getElementById('tot-aceite');
+  if (pctEl) {
+    pctEl.textContent = pct + '%';
+    pctEl.style.color = pct === 100 ? '#16A34A' : pct >= 50 ? '#EA580C' : '#DC2626';
+  }
+  const barEl = document.getElementById('aceite-bar-fill');
+  if (barEl) barEl.style.width = pct + '%';
 }
 
 function updateRow(modId, rowId, field, val) {
-  const mod = horasData.modulos.find(m => m.id === modId);
+  const mod = horasData.modulos.find(m => m.id===modId);
   if (!mod) return;
-  const row = mod.rows.find(r => r.id === rowId);
+  const row = mod.rows.find(r => r.id===rowId);
   if (!row) return;
-  row[field] = (field === 'horas') ? (parseFloat(val)||0) : val;
+  if (field === 'horas') row[field] = parseFloat(val)||0;
+  else if (field === 'ok') row[field] = val;
+  else row[field] = val;
   const sub = mod.rows.reduce((s,r) => s+(Number(r.horas)||0), 0);
   const badge = document.querySelector('#block_'+modId+' .modulo-subtotal');
   if (badge) badge.textContent = sub + 'h';
+  const okBadge = document.querySelector('#block_'+modId+' span[style*="DCFCE7"]');
+  if (okBadge) {
+    const okCt = mod.rows.filter(r=>r.ok).length;
+    okBadge.textContent = '✓ ' + okCt + '/' + mod.rows.length;
+  }
+  // update ok check display
+  if (field === 'ok') {
+    const span = document.querySelector('#tr_'+rowId+' .ok-check');
+    if (span) span.textContent = val ? '✓' : '';
+    const tr = document.getElementById('tr_'+rowId);
+    if (tr) tr.style.background = val ? '#F0FDF4' : '';
+  }
   updateTotals();
   saveData();
 }
 
 function updateModTitle(modId, val) {
-  const mod = horasData.modulos.find(m => m.id === modId);
+  const mod = horasData.modulos.find(m => m.id===modId);
   if (mod) { mod.title = val; saveData(); }
 }
 
 function addRow(modId) {
-  const mod = horasData.modulos.find(m => m.id === modId);
+  const mod = horasData.modulos.find(m => m.id===modId);
   if (!mod) return;
-  mod.rows.push({ id: uid(), ativ:'', perfil:'Consultor', prio:'Média', horas:0 });
-  saveData();
-  renderAll();
+  mod.rows.push({ id:uid(), ativ:'', resp:'Consultor', prio:'Média', horas:0, dt_ini:'', dt_fim:'', ok:false });
+  saveData(); renderAll();
   setTimeout(() => {
     const b = document.getElementById('block_'+modId);
-    if (b) { const ins = b.querySelectorAll('.inp-ativ'); if (ins.length) ins[ins.length-1].focus(); }
+    if (b) { const ins = b.querySelectorAll('.inp-ativ'); if(ins.length) ins[ins.length-1].focus(); }
   }, 40);
 }
 
 function deleteRow(modId, rowId) {
-  const mod = horasData.modulos.find(m => m.id === modId);
+  const mod = horasData.modulos.find(m => m.id===modId);
   if (!mod) return;
-  if (mod.rows.length <= 1 && !confirm('Remover a última atividade deste módulo?')) return;
-  mod.rows = mod.rows.filter(r => r.id !== rowId);
-  saveData();
-  renderAll();
+  if (mod.rows.length <= 1 && !confirm('Remover a última atividade?')) return;
+  mod.rows = mod.rows.filter(r => r.id!==rowId);
+  saveData(); renderAll();
 }
 
 function addModule() {
-  const palette = ['#7C3AED','#0891B2','#DB2777','#D97706','#16A34A','#DC2626'];
-  const color = palette[horasData.modulos.length % palette.length];
-  horasData.modulos.push({ id: uid(), title: 'Novo Módulo ' + (horasData.modulos.length+1), color, rows: [{ id: uid(), ativ:'', perfil:'Consultor', prio:'Média', horas:0 }] });
-  saveData();
-  renderAll();
-  setTimeout(() => { const l = document.querySelector('.modulo-block:last-child .modulo-title-input'); if(l){l.focus();l.select();} }, 40);
+  const pal = ['#7C3AED','#0891B2','#DB2777','#D97706'];
+  const c = pal[horasData.modulos.length % pal.length];
+  horasData.modulos.push({ id:uid(), title:'Novo Módulo '+(horasData.modulos.length+1), color:c,
+    rows:[{ id:uid(), ativ:'', resp:'Consultor', prio:'Média', horas:0, dt_ini:'', dt_fim:'', ok:false }] });
+  saveData(); renderAll();
+  setTimeout(() => { const l=document.querySelector('.modulo-block:last-child .modulo-title-input'); if(l){l.focus();l.select();} }, 40);
 }
 
 function deleteModule(modId) {
-  if (!confirm('Remover este módulo e todas as suas atividades?')) return;
-  horasData.modulos = horasData.modulos.filter(m => m.id !== modId);
-  saveData();
-  renderAll();
+  if (!confirm('Remover este módulo?')) return;
+  horasData.modulos = horasData.modulos.filter(m => m.id!==modId);
+  saveData(); renderAll();
 }
 
 function resetData() {
-  if (!confirm('Restaurar os dados padrão? Todas as alterações serão perdidas.')) return;
+  if (!confirm('Restaurar dados padrão? As alterações serão perdidas.')) return;
   horasData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  saveData();
-  renderAll();
+  saveData(); renderAll();
 }
 
 function exportCSV() {
-  let csv = 'Módulo,Atividade,Perfil,Prioridade,Horas\n';
+  let csv = 'Módulo,Atividade,Responsável,Prioridade,Dt.Início,Dt.Fim,Horas,OK Cliente\n';
   horasData.modulos.forEach(mod => {
-    mod.rows.forEach(row => { csv += `"${mod.title}","${row.ativ}","${row.perfil}","${row.prio}","${row.horas}"\n`; });
+    mod.rows.forEach(r => {
+      csv += '"'+mod.title+'","'+r.ativ+'","'+r.resp+'","'+r.prio+'","'+(r.dt_ini||'')+'","'+(r.dt_fim||'')+'","'+r.horas+'","'+(r.ok?'Sim':'Não')+'"\n';
+    });
     const sub = mod.rows.reduce((s,r)=>s+(Number(r.horas)||0),0);
-    csv += `"${mod.title} — SUBTOTAL","","","","${sub}"\n\n`;
+    csv += '"'+mod.title+' — SUBTOTAL","","","","","","'+sub+'",""\n\n';
   });
   const grand = horasData.modulos.reduce((s,m)=>s+m.rows.reduce((ss,r)=>ss+(Number(r.horas)||0),0),0);
-  csv += `"TOTAL PROJETO","","","","${grand}"\n`;
+  csv += '"TOTAL","","","","","","'+grand+'",""\n';
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download='CasaBorracha_Horas.csv';
+  a.href=url; a.download='CasaBorracha_Cronograma.csv';
   a.click(); URL.revokeObjectURL(url);
 }
 
 function initHoras() {
-  if (horasInited) { renderAll(); return; }
-  loadData();
+  if (!horasInited) { loadData(); horasInited = true; }
   renderAll();
-  horasInited = true;
 }
 
-// ─── SEPARATION PROTOTYPE DATA ───
+// ─── GANTT ───
+function renderGantt() {
+  if (!horasData) { loadData(); }
+  const container = document.getElementById('gantt-container');
+  if (!container) return;
+
+  const rows = horasData.modulos.flatMap(m => m.rows.map(r => ({...r, modTitle: m.title, modColor: m.color})));
+  const withDates = rows.filter(r => r.dt_ini && r.dt_fim);
+
+  if (!withDates.length) {
+    container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted)">Adicione datas de início e fim nas atividades para gerar o Gantt.</div>';
+    return;
+  }
+
+  const dates = withDates.flatMap(r => [new Date(r.dt_ini), new Date(r.dt_fim)]);
+  let minD = new Date(Math.min(...dates));
+  let maxD = new Date(Math.max(...dates));
+  // expand to month boundaries
+  minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
+  maxD = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0);
+  const totalMs = maxD - minD;
+
+  function pct(d) { return Math.max(0, Math.min(100, (new Date(d) - minD) / totalMs * 100)); }
+  function pctW(s,e) { return Math.max(0.5, (new Date(e) - new Date(s)) / totalMs * 100); }
+
+  // Build month headers
+  const months = [];
+  let cur = new Date(minD);
+  while (cur <= maxD) {
+    const start = pct(cur);
+    const nm = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    const end = pct(nm > maxD ? maxD : nm);
+    months.push({ label: cur.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), start, width: end-start });
+    cur = nm;
+  }
+
+  const today = new Date();
+  const todayPct = pct(today);
+  const showToday = todayPct >= 0 && todayPct <= 100;
+
+  const LABEL_W = 260;
+  const ROW_H   = 36;
+
+  let html2 = '<div class="gantt-wrap">';
+
+  // Header months
+  html2 += '<div class="gantt-head-row">'
+    + '<div style="width:'+LABEL_W+'px;flex-shrink:0;border-right:1px solid var(--border);padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Atividade</div>'
+    + '<div class="gantt-timeline-head" style="position:relative;flex:1">';
+  months.forEach(m => {
+    html2 += '<div class="gantt-month-label" style="left:'+m.start+'%;width:'+m.width+'%">'+m.label+'</div>';
+  });
+  html2 += '</div></div>';
+
+  // Module groups
+  let lastMod = '';
+  withDates.forEach((row, ri) => {
+    const isNewMod = row.modTitle !== lastMod;
+    if (isNewMod) {
+      lastMod = row.modTitle;
+      html2 += '<div class="gantt-mod-header" style="border-left:4px solid '+row.modColor+'">'+escH(row.modTitle)+'</div>';
+    }
+    const barLeft  = pct(row.dt_ini);
+    const barWidth = pctW(row.dt_ini, row.dt_fim);
+    const respColor = RESP_COLORS[row.resp] || '#2563EB';
+    const isDone = row.ok;
+    html2 += '<div class="gantt-row' + (ri%2===0?' gantt-row-even':'') + '">'
+      + '<div class="gantt-label" style="width:'+LABEL_W+'px">'
+        + '<span class="gantt-ok-dot" style="background:'+(isDone?'#16A34A':'#E5E7EB')+'"></span>'
+        + '<span class="gantt-label-text" title="'+escH(row.ativ)+'">'+escH(row.ativ)+'</span>'
+      + '</div>'
+      + '<div class="gantt-timeline" style="position:relative;flex:1;height:'+ROW_H+'px">';
+
+    months.forEach(m => {
+      html2 += '<div class="gantt-month-col" style="left:'+m.start+'%;width:'+m.width+'%"></div>';
+    });
+
+    if (showToday) {
+      html2 += '<div class="gantt-today-line" style="left:'+todayPct+'%"></div>';
+    }
+
+    html2 += '<div class="gantt-bar" style="left:'+barLeft+'%;width:'+barWidth+'%;background:'+respColor+';opacity:'+(isDone?'1':'.75')+';" title="'+escH(row.ativ)+' | '+row.dt_ini+' → '+row.dt_fim+' | '+row.horas+'h | '+row.resp+'">'
+      + '<span class="gantt-bar-label">'+row.horas+'h</span>'
+      + '</div>'
+      + '</div></div>';
+  });
+
+  // Today label
+  if (showToday) {
+    html2 += '<div style="position:relative;height:16px;border-top:1px solid var(--border)">'
+      + '<div style="position:absolute;left:calc('+LABEL_W+'px + '+todayPct+'% - 12px);font-size:9px;color:#DC2626;font-weight:700">hoje</div>'
+      + '</div>';
+  }
+
+  html2 += '</div>';
+
+  // Legend
+  html2 += '<div class="gantt-legend">';
+  Object.entries(RESP_COLORS).forEach(([k,v]) => {
+    html2 += '<div class="gantt-leg-item"><div class="gantt-leg-dot" style="background:'+v+'"></div>'+k+'</div>';
+  });
+  html2 += '<div class="gantt-leg-item"><div class="gantt-ok-dot" style="background:#16A34A;width:10px;height:10px;border-radius:50%"></div>Concluído (OK Cliente)</div>';
+  html2 += '</div>';
+
+  container.innerHTML = html2;
+  // update metrics
+  const rows2 = allRows();
+  const okCt  = rows2.filter(r=>r.ok).length;
+  const totEl2 = document.getElementById('tot-total-gantt');
+  const grand2 = horasData.modulos.reduce((s,m)=>s+m.rows.reduce((ss,r)=>ss+(Number(r.horas)||0),0),0);
+  if (totEl2) totEl2.textContent = grand2 + 'h';
+  const okCtEl = document.getElementById('tot-ok-ct');
+  if (okCtEl) okCtEl.textContent = okCt;
+  const okTotEl = document.getElementById('tot-ok-total');
+  if (okTotEl) okTotEl.textContent = 'de ' + rows2.length + ' atividades';
+  const pctEl2 = document.getElementById('tot-aceite');
+  const pct2   = rows2.length ? Math.round(okCt/rows2.length*100) : 0;
+  if (pctEl2) { pctEl2.textContent = pct2 + '%'; pctEl2.style.color = pct2===100?'#16A34A':pct2>=50?'#EA580C':'#DC2626'; }
+  const barEl2 = document.getElementById('aceite-bar-fill');
+  if (barEl2) barEl2.style.width = pct2 + '%';
+  if (withDates.length) {
+    const pEl = document.getElementById('gantt-period');
+    if (pEl) pEl.textContent = new Date(Math.min(...withDates.map(r=>new Date(r.dt_ini)))).toLocaleDateString('pt-BR',{month:'short',year:'numeric'})
+      + ' – ' + new Date(Math.max(...withDates.map(r=>new Date(r.dt_fim)))).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
+  }
+}
+
+// ─── SEPARATION PROTOTYPE ───
 const pedidos = [
-  { id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Entrega', status:'lib' },
-  { id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Balcão', status:'sep' },
-  { id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Entrega', status:'fin' },
-  { id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Balcão', status:'pend' },
-  { id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Entrega', status:'pend' },
+  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Entrega', status:'lib'},
+  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Balcão', status:'sep'},
+  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Entrega', status:'fin'},
+  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Balcão', status:'pend'},
+  {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Entrega', status:'pend'},
 ];
-
-const statusLabels = { pend:'Pendente de Sep.', lib:'Liberado p/ Sep.', sep:'Em Separação', fin:'Sep. Finalizada', conf:'Aguard. Conferência' };
-const statusCls    = { pend:'sp-pend', lib:'sp-lib', sep:'sp-sep', fin:'sp-fin', conf:'sp-conf' };
-
+const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência'};
+const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf'};
 const mapaItems = [
-  { cod:'1004', desc:'FOLHA MOLD DE ALUM M185', un:'CX', qtd:'100,00' },
-  { cod:'1008', desc:'FOLHA MOLD DE ALUM M190', un:'CX', qtd:'150,00' },
-  { cod:'2201', desc:'MANGUEIRA HIDRAUL 1/2" SAE100R2', un:'MT', qtd:'50,00' },
-  { cod:'3305', desc:'ABRAÇADEIRA INOX 3/4" PESADA', un:'PC', qtd:'200,00' },
-  { cod:'4410', desc:'ZARCOLAR CORAL GL', un:'GL', qtd:'20,00' },
+  {cod:'1004',desc:'FOLHA MOLD DE ALUM M185',un:'CX',qtd:'100,00'},
+  {cod:'1008',desc:'FOLHA MOLD DE ALUM M190',un:'CX',qtd:'150,00'},
+  {cod:'2201',desc:'MANGUEIRA HIDRAUL 1/2" SAE100R2',un:'MT',qtd:'50,00'},
+  {cod:'3305',desc:'ABRAÇADEIRA INOX 3/4" PESADA',un:'PC',qtd:'200,00'},
+  {cod:'4410',desc:'ZARCOLAR CORAL GL',un:'GL',qtd:'20,00'},
 ];
-
 let selectedSepId = null;
 let portalSelectedId = null;
 
-// ─── Portal de Vendas ───
 function selectPortalRow(tr) {
   document.querySelectorAll('#portal-tbody tr').forEach(r => r.classList.remove('snk-row-sel'));
   tr.classList.add('snk-row-sel');
   portalSelectedId = tr.dataset.id;
-  const nf   = tr.cells[2].textContent;
+  const nf = tr.cells[2].textContent;
   const parc = tr.cells[4].textContent;
-  const statusEl = tr.cells[6].querySelector('.snk-status-pill');
-  const isPend   = statusEl && statusEl.classList.contains('sp-pend');
-  document.getElementById('portal-action-panel').style.display = 'flex';
-  document.getElementById('portal-action-title').textContent = 'Ações para NF ' + nf + ' — ' + parc.substring(0,30);
+  const statusEl = tr.cells[6].querySelector('.snk-status-pill, .sp-pend, .sp-lib, .sp-sep, .sp-fin');
+  const isPend = statusEl && (statusEl.classList.contains('sp-pend') || statusEl.textContent.includes('Pendente'));
+  const panel = document.getElementById('portal-action-panel');
+  const title = document.getElementById('portal-action-title');
   const btnLib = document.getElementById('btn-liberar');
-  btnLib.disabled = !isPend;
-  btnLib.textContent = isPend ? '📤 Liberar p/ Separação' : '✓ Já liberado';
+  if (panel) panel.classList.add('visible');
+  if (title) title.textContent = 'Ações — NF ' + nf + ' · ' + parc.substring(0,28);
+  if (btnLib) { btnLib.disabled = !isPend; btnLib.textContent = isPend ? '📤 Liberar p/ Separação' : '✓ Já liberado'; }
 }
 
 function liberarSeparacao() {
   document.querySelectorAll('#portal-tbody tr.snk-row-sel').forEach(tr => {
-    const pill = tr.cells[6].querySelector('.snk-status-pill');
-    if (pill && pill.classList.contains('sp-pend')) {
-      pill.className = 'snk-status-pill sp-lib';
-      pill.textContent = 'Liberado p/ Sep.';
-      document.getElementById('btn-liberar').disabled = true;
-      document.getElementById('btn-liberar').textContent = '✓ Liberado';
-      const nf   = parseInt(tr.cells[2].textContent);
-      const nu   = parseInt(tr.cells[1].textContent);
+    const pill = tr.cells[6].querySelector('[class^="sp-"]') || tr.cells[6].firstChild;
+    if (pill && (pill.classList.contains('sp-pend') || pill.textContent.includes('Pendente'))) {
+      pill.className = 'snk-status-pill sp-lib'; pill.textContent = 'Liberado p/ Sep.';
+      const btnLib = document.getElementById('btn-liberar');
+      if (btnLib) { btnLib.disabled = true; btnLib.textContent = '✓ Liberado'; }
+      const nf = parseInt(tr.cells[2].textContent);
+      const nu = parseInt(tr.cells[1].textContent);
       const parc = tr.cells[4].textContent;
-      pedidos.push({ id: Date.now(), nf, nu, parc, vend:'Vendedor', itens: Math.floor(Math.random()*8)+1, tipo:'Balcão', status:'lib' });
+      pedidos.push({id:Date.now(),nf,nu,parc,vend:'Vendedor',itens:Math.floor(Math.random()*8)+1,tipo:'Balcão',status:'lib'});
       renderSepTable();
     }
   });
 }
 
-// ─── Área de Separação ───
 function renderSepTable() {
   const filter = document.getElementById('sep-filtro-status') ? document.getElementById('sep-filtro-status').value : 'all';
-  const tbody  = document.getElementById('sep-tbody');
+  const tbody = document.getElementById('sep-tbody');
   if (!tbody) return;
-
-  const filtered = pedidos.filter(p => p.status !== 'pend' && (filter === 'all' || p.status === filter));
-
-  const countLib = pedidos.filter(p => p.status === 'lib').length;
-  const countSep = pedidos.filter(p => p.status === 'sep').length;
-  const countFin = pedidos.filter(p => p.status === 'fin').length;
-  ['count-lib','count-sep','count-fin'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = [countLib, countSep, countFin][i];
-  });
-
+  const filtered = pedidos.filter(p => p.status !== 'pend' && (filter==='all'||p.status===filter));
+  const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('count-lib', pedidos.filter(p=>p.status==='lib').length);
+  set('count-sep', pedidos.filter(p=>p.status==='sep').length);
+  set('count-fin', pedidos.filter(p=>p.status==='fin').length);
+  const dispEl = document.getElementById('sep-count-display');
+  if (dispEl) dispEl.textContent = filtered.length + ' registros';
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#94A3B8;font-style:italic">Nenhum pedido neste status</td></tr>';
-    updateSepButtons();
-    return;
+    updateSepButtons(); return;
   }
-
   tbody.innerHTML = filtered.map(p => {
-    const isSelected = selectedSepId === p.id;
-    const tipoBg    = p.tipo === 'Balcão' ? '#DBEAFE' : '#FEF3C7';
-    const tipoColor = p.tipo === 'Balcão' ? '#1D4ED8' : '#92400E';
-    return '<tr data-pid="' + p.id + '" onclick="selectSepRow(' + p.id + ')" id="sep-row-' + p.id + '" class="' + (isSelected ? 'snk-row-sel' : '') + '">'
-      + '<td><input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation();selectSepRow(' + p.id + ')"/></td>'
-      + '<td><strong>' + p.nf + '</strong></td>'
-      + '<td>' + p.nu + '</td>'
-      + '<td>' + String(p.parc).substring(0,6) + '</td>'
-      + '<td>' + p.parc + '</td>'
-      + '<td>' + p.vend + '</td>'
-      + '<td style="text-align:center">' + p.itens + '</td>'
-      + '<td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:' + tipoBg + ';color:' + tipoColor + '">' + p.tipo + '</span></td>'
-      + '<td><span class="snk-status-pill ' + statusCls[p.status] + '">' + statusLabels[p.status] + '</span></td>'
-      + '<td><button class="snk-row-btn" style="color:#2563EB;border-color:#BFDBFE" onclick="event.stopPropagation();openMapaFor(' + p.id + ')">🖨 Mapa</button></td>'
-      + '</tr>';
+    const isSel = selectedSepId===p.id;
+    const tipoBg = p.tipo==='Balcão'?'#DBEAFE':'#FEF3C7';
+    const tipoC  = p.tipo==='Balcão'?'#1D4ED8':'#92400E';
+    return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'">'
+      +'<td><input type="checkbox" '+(isSel?'checked':'')+' onclick="event.stopPropagation();selectSepRow('+p.id+')"/></td>'
+      +'<td><strong>'+p.nf+'</strong></td><td>'+p.nu+'</td><td>'+String(p.parc).substring(0,6)+'</td><td>'+p.parc+'</td><td>'+p.vend+'</td>'
+      +'<td style="text-align:center">'+p.itens+'</td>'
+      +'<td><span style="font-size:10px;padding:1px 8px;border-radius:10px;background:'+tipoBg+';color:'+tipoC+'">'+p.tipo+'</span></td>'
+      +'<td><span class="snk-status-pill '+statusCls[p.status]+'">'+statusLabels[p.status]+'</span></td>'
+      +'<td><button class="snk-row-btn2" onclick="event.stopPropagation();openMapaFor('+p.id+')">🖨 Mapa</button></td>'
+      +'</tr>';
   }).join('');
-
   updateSepButtons();
 }
 
 function selectSepRow(id) {
-  selectedSepId = (selectedSepId === id) ? null : id;
+  selectedSepId = selectedSepId===id ? null : id;
   document.querySelectorAll('#sep-tbody tr').forEach(tr => {
     const pid = parseInt(tr.getAttribute('data-pid'));
     const chk = tr.querySelector('input[type=checkbox]');
-    const isSel = pid === selectedSepId;
+    const isSel = pid===selectedSepId;
     tr.classList.toggle('snk-row-sel', isSel);
     if (chk) chk.checked = isSel;
   });
   updateSepButtons();
 }
-
 function selectAllSep(chk) {
   selectedSepId = null;
   document.querySelectorAll('#sep-tbody tr').forEach(tr => {
     const c = tr.querySelector('input[type=checkbox]');
-    if (c) c.checked = chk.checked;
+    if(c) c.checked=chk.checked;
     tr.classList.toggle('snk-row-sel', chk.checked);
   });
   updateSepButtons();
 }
-
 function updateSepButtons() {
-  const p = pedidos.find(x => x.id === selectedSepId);
-  const printBtn  = document.getElementById('btn-print-mapa');
-  const iniciarBtn = document.getElementById('btn-iniciar');
-  const finalizarBtn = document.getElementById('btn-finalizar');
-  const hintEl    = document.getElementById('sep-hint');
-  if (printBtn)    printBtn.disabled    = !p;
-  if (iniciarBtn)  iniciarBtn.disabled  = !(p && p.status === 'lib');
-  if (finalizarBtn) finalizarBtn.disabled = !(p && p.status === 'sep');
-  if (hintEl) hintEl.textContent = p ? ('Selecionado: NF ' + p.nf + ' — ' + p.parc) : 'Selecione um pedido para habilitar as ações';
+  const p = pedidos.find(x=>x.id===selectedSepId);
+  const set = (id,d) => { const e=document.getElementById(id); if(e) e.disabled=d; };
+  set('btn-print-mapa', !p);
+  set('btn-iniciar',  !(p&&p.status==='lib'));
+  set('btn-finalizar',!(p&&p.status==='sep'));
+  const hint = document.getElementById('sep-hint');
+  if (hint) hint.textContent = p ? ('Selecionado: NF '+p.nf+' — '+p.parc) : 'Selecione um pedido para habilitar as ações';
+  const bar = document.getElementById('sep-action-bar');
+  if (bar) bar.classList.toggle('visible', !!p);
 }
-
 function iniciarSeparacao() {
-  const p = pedidos.find(x => x.id === selectedSepId);
-  if (!p || p.status !== 'lib') return;
-  p.status = 'sep';
-  renderSepTable();
-  syncPortalStatus(p.nf, 'sep');
+  const p=pedidos.find(x=>x.id===selectedSepId);
+  if(!p||p.status!=='lib') return;
+  p.status='sep'; renderSepTable(); syncPortalStatus(p.nf,'sep');
 }
-
 function finalizarSeparacao() {
-  const p = pedidos.find(x => x.id === selectedSepId);
-  if (!p || p.status !== 'sep') return;
-  p.status = 'fin';
-  renderSepTable();
-  syncPortalStatus(p.nf, 'fin');
+  const p=pedidos.find(x=>x.id===selectedSepId);
+  if(!p||p.status!=='sep') return;
+  p.status='fin'; renderSepTable(); syncPortalStatus(p.nf,'fin');
 }
-
-function syncPortalStatus(nf, st) {
+function syncPortalStatus(nf,st) {
   document.querySelectorAll('#portal-tbody tr').forEach(tr => {
-    if (tr.cells.length > 2 && parseInt(tr.cells[2].textContent) === nf) {
-      const pill = tr.cells[6] ? tr.cells[6].querySelector('.snk-status-pill') : null;
-      if (pill) { pill.className = 'snk-status-pill ' + statusCls[st]; pill.textContent = statusLabels[st]; }
+    if(tr.cells.length>2 && parseInt(tr.cells[2].textContent)===nf) {
+      const pill=tr.cells[6]?tr.cells[6].querySelector('[class*="sp-"]'):null;
+      if(pill){pill.className='snk-status-pill '+statusCls[st];pill.textContent=statusLabels[st];}
     }
   });
 }
-
 function openMapaFor(id) {
-  const p = pedidos.find(x => x.id === id);
-  if (!p) return;
-  selectedSepId = id;
-  renderSepTable();
-  printMapa();
+  const p=pedidos.find(x=>x.id===id); if(!p) return;
+  selectedSepId=id; renderSepTable(); printMapa();
 }
-
 function printMapa() {
-  const p = pedidos.find(x => x.id === selectedSepId);
-  if (!p) return;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('mapa-nf', p.nf);
-  set('mapa-data', new Date().toLocaleDateString('pt-BR'));
-  set('mapa-parceiro', p.parc);
-  set('mapa-vendedor', p.vend);
-  set('mapa-tipo', p.tipo);
-  set('mapa-ts', new Date().toLocaleString('pt-BR'));
-  const mapaBody = document.getElementById('mapa-tbody');
-  if (mapaBody) {
-    const items = mapaItems.slice(0, Math.min(p.itens, mapaItems.length));
-    mapaBody.innerHTML = items.map((item, i) =>
-      '<tr>'
-      + '<td class="qtd-col">' + (i+1) + '</td>'
-      + '<td>' + item.cod + '</td>'
-      + '<td>' + item.desc + '</td>'
-      + '<td class="qtd-col">' + item.un + '</td>'
-      + '<td class="qtd-col">' + item.qtd + '</td>'
-      + '<td class="qtd-col fill-col">&nbsp;</td>'
-      + '<td class="qtd-col fill-col">&nbsp;</td>'
-      + '<td>___________</td>'
-      + '</tr>'
-    ).join('');
-  }
-  const modal = document.getElementById('mapa-modal');
-  if (modal) modal.style.display = 'flex';
+  const p=pedidos.find(x=>x.id===selectedSepId); if(!p) return;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('mapa-nf',p.nf); set('mapa-data',new Date().toLocaleDateString('pt-BR'));
+  set('mapa-parceiro',p.parc); set('mapa-vendedor',p.vend);
+  set('mapa-tipo',p.tipo); set('mapa-ts',new Date().toLocaleString('pt-BR'));
+  const mb=document.getElementById('mapa-tbody');
+  if(mb) mb.innerHTML=mapaItems.slice(0,Math.min(p.itens,mapaItems.length)).map((item,i)=>
+    '<tr><td class="qtd-col">'+(i+1)+'</td><td>'+item.cod+'</td><td>'+item.desc+'</td>'
+    +'<td class="qtd-col">'+item.un+'</td><td class="qtd-col">'+item.qtd+'</td>'
+    +'<td class="qtd-col fill-col">&nbsp;</td><td class="qtd-col fill-col">&nbsp;</td><td>___________</td></tr>'
+  ).join('');
+  const modal=document.getElementById('mapa-modal'); if(modal) modal.style.display='flex';
 }
-
 function closeMapa(e) {
-  const modal = document.getElementById('mapa-modal');
-  if (!modal) return;
-  if (!e || e.target === modal) modal.style.display = 'none';
+  const m=document.getElementById('mapa-modal'); if(!m) return;
+  if(!e||e.target===m) m.style.display='none';
 }
 
-// Init on tab switch
-document.addEventListener('DOMContentLoaded', function() {
-  renderSepTable();
-});
-
-// ─── DASHBOARD CHARTS ───
-function renderBarChart(containerId, data, color) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const maxVal = Math.max(...data.map(d => d.v));
-  container.innerHTML = data.map(d => {
-    const pct = maxVal > 0 ? Math.round((d.v / maxVal) * 100) : 0;
-    return '<div class="bar-col">'
-      + '<div class="bar-val">' + (d.v || '') + '</div>'
-      + '<div class="bar-fill" style="height:' + pct + '%;background:' + color + ';width:100%"></div>'
-      + '<div class="bar-label">' + d.l + '</div>'
-      + '</div>';
+// ─── DASHBOARDS ───
+function renderBarChart(id,data,color) {
+  const c=document.getElementById(id); if(!c) return;
+  const mx=Math.max(...data.map(d=>d.v));
+  c.innerHTML=data.map(d=>{
+    const p=mx>0?Math.round(d.v/mx*100):0;
+    return '<div class="bar-col"><div class="bar-val">'+(d.v||'')+'</div>'
+      +'<div class="bar-fill" style="height:'+p+'%;background:'+color+';width:100%"></div>'
+      +'<div class="bar-label">'+d.l+'</div></div>';
   }).join('');
 }
+const recBarData=[{l:'07h',v:1},{l:'08h',v:3},{l:'09h',v:4},{l:'10h',v:6},{l:'11h',v:5},{l:'12h',v:2},{l:'13h',v:4},{l:'14h',v:3},{l:'15h',v:1},{l:'16h',v:0}];
+const sepBarData=[{l:'07h',v:2},{l:'08h',v:4},{l:'09h',v:6},{l:'10h',v:5},{l:'11h',v:4},{l:'12h',v:2},{l:'13h',v:5},{l:'14h',v:3},{l:'15h',v:0},{l:'16h',v:0}];
+function initDashRec() { renderBarChart('rec-bar-chart',recBarData,'#2563EB'); }
+function initDashSep() { renderBarChart('sep-bar-chart',sepBarData,'#EA580C'); }
 
-const recBarData = [
-  {l:'07h',v:1},{l:'08h',v:3},{l:'09h',v:4},{l:'10h',v:6},{l:'11h',v:5},
-  {l:'12h',v:2},{l:'13h',v:4},{l:'14h',v:3},{l:'15h',v:1},{l:'16h',v:0}
-];
-const sepBarData = [
-  {l:'07h',v:2},{l:'08h',v:4},{l:'09h',v:6},{l:'10h',v:5},{l:'11h',v:4},
-  {l:'12h',v:2},{l:'13h',v:5},{l:'14h',v:3},{l:'15h',v:0},{l:'16h',v:0}
-];
-
-function initDashRec() {
-  renderBarChart('rec-bar-chart', recBarData, '#2563EB');
-}
-function initDashSep() {
-  renderBarChart('sep-bar-chart', sepBarData, '#EA580C');
-}
-
-// Hook into showTab
-
-
+document.addEventListener('DOMContentLoaded', () => { renderSepTable(); });
 </script>
 </body>
 </html>
