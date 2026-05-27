@@ -3136,7 +3136,7 @@ function lookupUser(codusu) {
 
   const nome = TSIUSU[code];
   if (nome) {
-    // Usuário encontrado no mock
+    // Encontrou o NOMEUSU na TSIUSU — grava o nome
     res.innerHTML =
       '<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">'
       + '<span style="font-size:20px">👤</span>'
@@ -3146,20 +3146,17 @@ function lookupUser(codusu) {
         + '<div style="font-size:10px;color:#64748B;font-family:monospace">CODUSU: ' + code + '</div>'
       + '</div></div>';
     _confirmedUser = { codusu: code, nomeusu: nome };
+    btn.disabled = false; btn.style.opacity = '1';
   } else {
-    // Não encontrado no mock — aceita mesmo assim (modo protótipo)
+    // CODUSU não encontrado — exibe observação e bloqueia confirmação
     res.innerHTML =
       '<div style="background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#92400E">'
-      + '<strong>Obs.:</strong> Código <strong>' + code + '</strong> não está no mock de usuários deste protótipo. '
-      + 'Em produção, a validação ocorre contra <span style="font-family:monospace">TSIUSU.CODUSU</span> no Sankhya OM.'
-      + '</div>'
-      + '<div style="margin-top:6px;padding:6px 10px;font-size:11px;color:#64748B">'
-      + '👤 Será registrado como: <strong style="color:#1A3E6E">' + code + '</strong>'
+      + '<strong>Obs.:</strong> O código <strong>' + code + '</strong> não retornou nenhum <span style="font-family:monospace">NOMEUSU</span> na TSIUSU. '
+      + 'Informe um código de usuário válido para registrar o nome do operador.'
       + '</div>';
-    _confirmedUser = { codusu: code, nomeusu: code };
+    _confirmedUser = null;
+    btn.disabled = true; btn.style.opacity = '.5';
   }
-  // Habilita sempre que tiver código
-  btn.disabled = false; btn.style.opacity = '1';
 }
 
 let _currentRole = 'sep'; // 'sep' or 'conf'
