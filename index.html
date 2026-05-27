@@ -271,7 +271,8 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .sp-lib   { background:#DBEAFE; color:#1D4ED8; border:1px solid #93C5FD; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
   .sp-sep   { background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
   .sp-fin   { background:#DCFCE7; color:#166534; border:1px solid #86EFAC; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
-  .sp-conf  { background:#F3E8FF; color:#6B21A8; border:1px solid #D8B4FE; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .sp-conf     { background:#F3E8FF; color:#6B21A8; border:1px solid #D8B4FE; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .sp-cancelada { background:#FEF2F2; color:#991B1B; border:1px solid #FCA5A5; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; display:inline-block; }
   /* Action panel (bottom of main) */
   .snk-action-bar { display:none; padding:8px 12px; background:#EFF6FF; border-top:2px solid #1565C0; align-items:center; gap:10px; flex-wrap:wrap; }
   .snk-action-bar.visible { display:flex; }
@@ -480,7 +481,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <div class="nav-tab" onclick="showTab('expedicao')" id="tab-expedicao"><span class="dot"></span>Expedição</div>
   <div class="nav-tab" onclick="showTab('etiquetas')" id="tab-etiquetas"><span class="dot"></span>Etiquetas</div>
   <div class="nav-tab" onclick="showTab('horas')" id="tab-horas"><span class="dot"></span>Est. de Horas</div>
-  <div class="nav-tab" onclick="showTab('separacao')" id="tab-separacao"><span class="dot"></span>Acompanhamento de Separação</div>
+  <div class="nav-tab" onclick="showTab('separacao')" id="tab-separacao"><span class="dot"></span>Operação de Separação</div>
   <div class="nav-tab" onclick="showTab('dash-rec')" id="tab-dash-rec"><span class="dot"></span>📊 Dashboard Recebimento</div>
   <div class="nav-tab" onclick="showTab('dash-sep')" id="tab-dash-sep"><span class="dot"></span>📦 Dashboard Separação</div>
   <div class="nav-tab" onclick="showTab('gantt')" id="tab-gantt"><span class="dot"></span>📅 Cronograma</div>
@@ -1466,15 +1467,15 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <div class="page-hero">
     <div class="hero-icon" style="background:#DCFCE7">🔄</div>
     <div>
-      <h1>Acompanhamento de Separação</h1>
-      <p>Protótipos das telas Sankhya OM. <strong>Portal de Vendas</strong> — vendedor libera o pedido para separação com a coluna de Status. <strong>Área de Separação</strong> — tela exclusiva dos operadores para gerenciar o ciclo de separação e imprimir o Mapa.</p>
+      <h1>Operação de Separação</h1>
+      <p>Protótipos das telas Sankhya OM. <strong>Portal de Vendas</strong> — vendedor libera o pedido para separação com a coluna de Status. <strong>Operação de Separação</strong> — tela exclusiva dos operadores para gerenciar o ciclo de separação e imprimir o Mapa.</p>
     </div>
   </div>
 
   <!-- ── PORTAL DE VENDAS ── -->
   <div class="section-title">Portal de Vendas — coluna Status Pedido + Liberar p/ Separação</div>
   <div class="info-box" style="margin-bottom:1rem">
-    <strong>Ação do vendedor:</strong> Após confirmar a NF, seleciona a linha e clica em <em>Liberar p/ Separação</em>. O status muda de <em>Pendente de Sep.</em> para <em>Liberado p/ Sep.</em> e o pedido entra na fila da Área de Separação.
+    <strong>Ação do vendedor:</strong> Após confirmar a NF, seleciona a linha e clica em <em>Liberar p/ Separação</em>. O status muda de <em>Pendente de Sep.</em> para <em>Liberado p/ Sep.</em> e o pedido entra na fila da Operação de Separação.
   </div>
 
   <div class="snk-wrap">
@@ -1484,7 +1485,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
       <div class="snk-brand"><div class="snk-brand-dot"></div>Sankhya</div>
       <div class="snk-module-tabs">
         <div class="snk-mtab snk-mtab-active">Portal de Vendas <span class="snk-mtab-close">✕</span></div>
-        <div class="snk-mtab">Área de Separação <span class="snk-mtab-close">✕</span></div>
+        <div class="snk-mtab">Operação de Separação <span class="snk-mtab-close">✕</span></div>
         <div class="snk-mtab">Configuração de Conferência <span class="snk-mtab-close">✕</span></div>
         <div class="snk-mtab">Fila de Conferência <span class="snk-mtab-close">✕</span></div>
       </div>
@@ -1637,11 +1638,11 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   </div>
 
   <div class="screenshot-caption" style="margin-top:-1rem;margin-bottom:1.5rem">
-    <strong>💡 Interativo:</strong> Clique em qualquer linha para selecionar. Selecione uma linha com status <em>Pendente de Sep.</em> e clique em <strong>Liberar p/ Separação</strong> — o status muda em tempo real e o pedido aparece na tela abaixo.
+    <strong>💡 Interativo:</strong> Clique em uma linha para selecionar. Depois clique no botão <strong>⚡</strong> na toolbar e selecione <em>Liberar p/ Separação</em> — ou use o botão de ação no painel inferior. O status muda de <em>Pendente de Sep.</em> para <em>Liberado p/ Sep.</em> e o pedido entra na fila da Operação de Separação.
   </div>
 
   <!-- ── ÁREA DE SEPARAÇÃO ── -->
-  <div class="section-title">Área de Separação — Tela do Operador</div>
+  <div class="section-title">Operação de Separação — Tela do Operador</div>
   <div class="info-box" style="margin-bottom:1rem">
     <strong>Acesso restrito a operadores/separadores.</strong> Exibe pedidos liberados. O operador imprime o Mapa de Separação, aciona <em>Iniciar</em> e <em>Finalizar</em>. Ao finalizar, o pedido entra na Fila de Conferência do Sankhya OM.
   </div>
@@ -1652,7 +1653,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
       <div class="snk-brand"><div class="snk-brand-dot"></div>Sankhya</div>
       <div class="snk-module-tabs">
         <div class="snk-mtab">Portal de Vendas <span class="snk-mtab-close">✕</span></div>
-        <div class="snk-mtab snk-mtab-active">Área de Separação <span class="snk-mtab-close">✕</span></div>
+        <div class="snk-mtab snk-mtab-active">Operação de Separação <span class="snk-mtab-close">✕</span></div>
         <div class="snk-mtab">Configuração de Conferência <span class="snk-mtab-close">✕</span></div>
         <div class="snk-mtab">Fila de Conferência <span class="snk-mtab-close">✕</span></div>
       </div>
@@ -1680,6 +1681,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <option value="lib">Liberado p/ Sep.</option>
             <option value="sep">Em Separação</option>
             <option value="fin">Sep. Finalizada</option>
+            <option value="cancelada">Sep. Cancelada</option>
           </select>
         </div>
         <div class="snk-filter-field"><label>Tipo</label>
@@ -1693,12 +1695,13 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         <div style="font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between"><span>Liberados:</span><span class="sp-lib" id="count-lib">0</span></div>
         <div style="font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between"><span>Em Sep.:</span><span class="sp-sep" id="count-sep">0</span></div>
         <div style="font-size:11px;display:flex;justify-content:space-between"><span>Finalizados:</span><span class="sp-fin" id="count-fin">0</span></div>
+        <div style="font-size:11px;margin-top:4px;display:flex;justify-content:space-between"><span>Cancelados:</span><span class="sp-cancelada" id="count-can">0</span></div>
       </div>
       <!-- Main -->
       <div class="snk-main">
         <div class="snk-result-bar">
           <span class="snk-result-title">Pedidos para Separação</span>
-          <span class="snk-result-link">Área de Separação</span>
+          <span class="snk-result-link">Operação de Separação</span>
         </div>
         <div class="snk-toolbar-row">
           <div class="snk-tb-btn-icon">⚙</div>
@@ -1706,6 +1709,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <button class="snk-tb-btn" id="btn-print-mapa" onclick="openUserModal(selectedSepId)" disabled style="color:#1565C0;font-weight:600">🖨 Imprimir Mapa Sep.</button>
           <button class="snk-tb-btn" id="btn-iniciar" onclick="iniciarSeparacao()" disabled style="color:#92400E;font-weight:600">▶ Iniciar Separação</button>
           <button class="snk-tb-btn" id="btn-finalizar" onclick="finalizarSeparacao()" disabled style="color:#166534;font-weight:600">✔ Finalizar Separação</button>
+          <button class="snk-tb-btn" id="btn-cancelar" onclick="abrirCancelamento()" disabled style="color:#DC2626;font-weight:600;border-color:#FCA5A5">✕ Cancelar Separação</button>
           <div class="snk-tb-sep"></div>
           <div class="snk-tb-btn-icon" style="font-size:14px">⚡</div>
           <div class="snk-tb-count" id="sep-count-display">0 registros</div>
@@ -1743,6 +1747,62 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
   <div class="screenshot-caption" style="margin-top:-1rem;margin-bottom:2rem">
     <strong>💡 Interativo:</strong> Selecione uma linha → habilita os botões na toolbar. <strong>Imprimir Mapa Sep.</strong> abre o mapa de separação. <strong>Iniciar</strong> muda para Em Separação. <strong>Finalizar</strong> muda para Sep. Finalizada e sincroniza o Portal de Vendas.
+  </div>
+
+  <!-- Modal de Cancelamento de Separação -->
+  <div id="cancel-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden">
+      <div style="background:#DC2626;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="color:#fff;font-size:14px;font-weight:700">✕ Cancelar Separação</div>
+        <button onclick="fecharCancelamento()" style="background:none;border:none;color:#FCA5A5;font-size:18px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <div style="padding:20px 24px">
+        <div id="cancel-modal-nf" style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#DC2626;font-weight:600"></div>
+
+        <!-- CODUSU -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Código do Usuário (CODUSU)</label>
+          <div style="display:flex;gap:8px">
+            <input id="cancel-codusu" type="text" placeholder="Ex: ALEXS, CARLOS..."
+              style="flex:1;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-family:monospace;outline:none"
+              onkeyup="this.value=this.value.toUpperCase();lookupCancelUser(this.value)"/>
+            <button onclick="lookupCancelUser(document.getElementById('cancel-codusu').value)"
+              style="padding:9px 14px;background:#DC2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🔍</button>
+          </div>
+          <div id="cancel-user-result" style="margin-top:8px;min-height:32px"></div>
+        </div>
+
+        <!-- MOTIVO -->
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Motivo do Cancelamento <span style="color:#DC2626">*</span></label>
+          <select id="cancel-motivo-sel" onchange="checkCancelReady()"
+            style="width:100%;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-family:inherit;margin-bottom:8px;outline:none">
+            <option value="">— Selecione o motivo —</option>
+            <option value="Pedido duplicado">Pedido duplicado</option>
+            <option value="Erro no pedido">Erro no pedido</option>
+            <option value="Produto em falta">Produto em falta no estoque</option>
+            <option value="Solicitação do cliente">Solicitação do cliente</option>
+            <option value="Problema operacional">Problema operacional</option>
+            <option value="Outro">Outro (detalhar abaixo)</option>
+          </select>
+          <textarea id="cancel-motivo-obs" placeholder="Observação adicional (opcional)..."
+            style="width:100%;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;min-height:60px;outline:none;box-sizing:border-box"
+            onkeyup="checkCancelReady()"></textarea>
+        </div>
+
+        <div id="cancel-obs-hint" style="background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#92400E;margin-bottom:16px">
+          ⚠ Após cancelar, o pedido fica com status <strong>Sep. Cancelada</strong> mas pode ser reimpresso e reiniciado.
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="fecharCancelamento()" style="padding:8px 18px;border:1px solid #D1D5DB;border-radius:6px;cursor:pointer;font-size:13px;background:#fff">Voltar</button>
+          <button id="btn-confirm-cancel" onclick="confirmarCancelamento()" disabled
+            style="padding:8px 18px;background:#DC2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;opacity:.5">
+            ✕ Confirmar Cancelamento
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de autenticação do separador -->
@@ -2441,7 +2501,7 @@ const DEFAULT_DATA = {
         {id:'e2', ativ:'Configuração Situação Logística (4 estágios + Tipo de Venda)',          resp:'TI+Consultoria', prio:'Alta',  horas:12, dt_ini:'2025-07-14', dt_fim:'2025-07-18', ok:false},
         {id:'e3', ativ:'Configuração Fila de Conferência — expedição (TOP + conf. conferência)',resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-07-14', dt_fim:'2025-07-21', ok:false},
         {id:'e4', ativ:'Parametrização conferência NF Venda (Antes da confirmação)',            resp:'Consultor',      prio:'Alta',  horas:8,  dt_ini:'2025-07-21', dt_fim:'2025-07-25', ok:false},
-        {id:'e5', ativ:'Configuração Área de Separação (NF, endereço, tipo de venda)',          resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-07-21', dt_fim:'2025-07-28', ok:false},
+        {id:'e5', ativ:'Configuração Operação de Separação (NF, endereço, tipo de venda)',          resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-07-21', dt_fim:'2025-07-28', ok:false},
         {id:'e7', ativ:'Testes integrados — fluxo de expedição (Venda Balcão e Distribuição)', resp:'TI+Consultoria', prio:'Alta',  horas:8,  dt_ini:'2025-08-04', dt_fim:'2025-08-08', ok:false},
         {id:'e6', ativ:'Configuração portal de vendas — situação logística em tempo real',      resp:'TI+Consultoria', prio:'Média', horas:10, dt_ini:'2025-07-28', dt_fim:'2025-08-01', ok:false},
         {id:'e8', ativ:'Treinamento — equipe de expedição e vendedores',                        resp:'Consultor',      prio:'Média', horas:6,  dt_ini:'2025-08-11', dt_fim:'2025-08-12', ok:false},
@@ -2813,8 +2873,8 @@ const pedidos = [
   {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Distribuição', status:'pend', end:'Rod. BR-050 km 12, Galpão 3 — Uberaba MG',
    dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
 ];
-const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência'};
-const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf'};
+const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência',cancelada:'Sep. Cancelada'};
+const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf',cancelada:'sp-cancelada'};
 const mapaItems = [
   {cod:'1004',desc:'FOLHA MOLD DE ALUM M185',un:'CX',qtd:'100,00'},
   {cod:'1008',desc:'FOLHA MOLD DE ALUM M190',un:'CX',qtd:'150,00'},
@@ -2841,6 +2901,37 @@ function selectPortalRow(tr) {
   if (btnLib) { btnLib.disabled = !isPend; btnLib.textContent = isPend ? '📤 Liberar p/ Separação' : '✓ Já liberado'; }
 }
 
+function toggleLightningMenu() {
+  const m = document.getElementById('lightning-menu');
+  if (!m) return;
+  const isOpen = m.style.display !== 'none';
+  m.style.display = isOpen ? 'none' : 'block';
+  // Close on outside click
+  if (!isOpen) {
+    setTimeout(() => {
+      document.addEventListener('click', function closeLightning(e) {
+        const wrap = document.getElementById('portal-lightning-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+          m.style.display = 'none';
+          document.removeEventListener('click', closeLightning);
+        }
+      });
+    }, 10);
+  }
+}
+
+function liberarDoMenu() {
+  const m = document.getElementById('lightning-menu');
+  if (m) m.style.display = 'none';
+  // Find selected row and trigger liberation
+  const selRow = document.querySelector('#portal-tbody tr.snk-row-sel');
+  if (!selRow) {
+    alert('Selecione uma NF antes de liberar para separação.');
+    return;
+  }
+  liberarSeparacao();
+}
+
 function liberarSeparacao() {
   document.querySelectorAll('#portal-tbody tr.snk-row-sel').forEach(tr => {
     const pill = tr.cells[6].querySelector('[class^="sp-"]') || tr.cells[6].firstChild;
@@ -2862,6 +2953,8 @@ function renderSepTable() {
   const tbody = document.getElementById('sep-tbody');
   if (!tbody) return;
   const filtered = pedidos.filter(p => p.status !== 'pend' && (filter==='all'||p.status===filter));
+  const countCan = pedidos.filter(p => p.status === 'cancelada').length;
+  const canEl = document.getElementById('count-can'); if(canEl) canEl.textContent = countCan;
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
   set('count-lib', pedidos.filter(p=>p.status==='lib').length);
   set('count-sep', pedidos.filter(p=>p.status==='sep').length);
@@ -2885,7 +2978,8 @@ function renderSepTable() {
     const confNome = p.conferente_nomeusu
       ? '<span style="font-size:11px;font-weight:600;color:#7C3AED">'+p.conferente_nomeusu+'</span>'
       : '<span style="color:#CBD5E1;font-size:10px">—</span>';
-    return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'">'
+    const isCancelled = p.status === 'cancelada';
+    return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'" style="'+(isCancelled?'opacity:.65;':'')+'">';
       +'<td><input type="checkbox" '+(isSel?'checked':'')+' onclick="event.stopPropagation();selectSepRow('+p.id+')"/></td>'
       +'<td><strong style="color:#1D4ED8">NF '+p.nf+'</strong></td>'
       +'<td>'+p.parc+'</td>'
@@ -3220,6 +3314,102 @@ function confirmUserAndPrint() {
   closeUserModal();
   selectedSepId = _userModalPedidoId;
   printMapa();
+}
+
+
+// ─── CANCELAMENTO DE SEPARAÇÃO ───
+let _cancelPedidoId  = null;
+let _cancelUser      = null;
+
+function abrirCancelamento() {
+  const p = pedidos.find(x => x.id === selectedSepId);
+  if (!p) return;
+  _cancelPedidoId = p.id;
+  _cancelUser     = null;
+
+  const nfEl = document.getElementById('cancel-modal-nf');
+  if (nfEl) nfEl.innerHTML =
+    '✕ Cancelar NF <strong>' + p.nf + '</strong> &nbsp;·&nbsp; ' + p.parc +
+    ' &nbsp;·&nbsp; <span style="font-size:11px;padding:1px 8px;border-radius:10px;background:' +
+    (p.tipo==='Venda Balcão'?'#DBEAFE':'#FEF3C7') + ';color:' +
+    (p.tipo==='Venda Balcão'?'#1D4ED8':'#92400E') + '">' + p.tipo + '</span>';
+
+  // Reset fields
+  const codusu = document.getElementById('cancel-codusu');
+  const result = document.getElementById('cancel-user-result');
+  const motSel = document.getElementById('cancel-motivo-sel');
+  const motObs = document.getElementById('cancel-motivo-obs');
+  if (codusu) codusu.value = '';
+  if (result) result.innerHTML = '';
+  if (motSel) motSel.value = '';
+  if (motObs) motObs.value = '';
+
+  const btn = document.getElementById('btn-confirm-cancel');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const modal = document.getElementById('cancel-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function fecharCancelamento() {
+  const modal = document.getElementById('cancel-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function lookupCancelUser(codusu) {
+  const res = document.getElementById('cancel-user-result');
+  if (!res) return;
+  const code = (codusu || '').trim().toUpperCase();
+  if (!code) { res.innerHTML = ''; _cancelUser = null; checkCancelReady(); return; }
+  const nome = TSIUSU[code];
+  if (nome) {
+    res.innerHTML = '<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px">'
+      + '<span>👤</span><div><strong style="color:#1A3E6E">' + nome + '</strong>'
+      + '<span style="font-family:monospace;color:#94A3B8;margin-left:8px;font-size:10px">' + code + '</span></div></div>';
+    _cancelUser = { codusu: code, nomeusu: nome };
+  } else {
+    res.innerHTML = '<div style="background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:7px 12px;font-size:12px;color:#92400E">'
+      + '<strong>Obs.:</strong> Código <strong>' + code + '</strong> não encontrado na TSIUSU.</div>';
+    _cancelUser = null;
+  }
+  checkCancelReady();
+}
+
+function checkCancelReady() {
+  const motSel = document.getElementById('cancel-motivo-sel');
+  const btn    = document.getElementById('btn-confirm-cancel');
+  if (!btn) return;
+  const motivo = motSel ? motSel.value : '';
+  const ok = _cancelUser && motivo;
+  btn.disabled    = !ok;
+  btn.style.opacity = ok ? '1' : '.5';
+}
+
+function confirmarCancelamento() {
+  if (!_cancelUser || !_cancelPedidoId) return;
+  const p = pedidos.find(x => x.id === _cancelPedidoId);
+  if (!p) return;
+
+  const motSel = document.getElementById('cancel-motivo-sel');
+  const motObs = document.getElementById('cancel-motivo-obs');
+  const motivo = (motSel ? motSel.value : '') + (motObs && motObs.value ? ' — ' + motObs.value : '');
+
+  p.status              = 'cancelada';
+  p.cancelado_por_cod   = _cancelUser.codusu;
+  p.cancelado_por_nome  = _cancelUser.nomeusu;
+  p.cancelado_motivo    = motivo;
+  p.cancelado_dt        = fmtDT(new Date());
+
+  fecharCancelamento();
+  renderSepTable();
+  syncPortalStatus(p.nf, 'cancelada');
+
+  // Feedback
+  const btn = document.getElementById('btn-cancelar');
+  if (btn) {
+    btn.textContent = '✕ Cancelado';
+    setTimeout(() => { btn.textContent = '✕ Cancelar Separação'; }, 2000);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => { renderSepTable(); });
