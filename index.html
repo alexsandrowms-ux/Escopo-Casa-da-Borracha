@@ -1710,12 +1710,13 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <button class="snk-tb-btn" id="btn-iniciar" onclick="iniciarSeparacao()" disabled style="color:#92400E;font-weight:600">▶ Iniciar Separação</button>
           <button class="snk-tb-btn" id="btn-finalizar" onclick="finalizarSeparacao()" disabled style="color:#166534;font-weight:600">✔ Finalizar Separação</button>
           <button class="snk-tb-btn" id="btn-cancelar" onclick="abrirCancelamento()" disabled style="color:#DC2626;font-weight:600;border-color:#FCA5A5">✕ Cancelar Separação</button>
+          <button class="snk-tb-btn" id="btn-reiniciar" onclick="abrirReinicio()" disabled style="color:#7C3AED;font-weight:600;border-color:#D8B4FE">↺ Reiniciar Separação</button>
           <div class="snk-tb-sep"></div>
           <div class="snk-tb-btn-icon" style="font-size:14px">⚡</div>
           <div class="snk-tb-count" id="sep-count-display">0 registros</div>
         </div>
         <div class="snk-grid-wrap">
-          <table class="snk-tbl" style="min-width:1550px">l">
+          <table class="snk-tbl" style="min-width:1700px">l">
             <thead>
               <tr>
                 <th style="width:28px"><input type="checkbox" onchange="selectAllSep(this)"/></th>
@@ -1729,7 +1730,8 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
                 <th style="min-width:140px">Nome Conferente</th>
                 <th style="min-width:130px">Dt. Início Sep.</th>
                 <th style="min-width:130px">Dt. Final Tarefa</th>
-                <th class="snk-col-highlight-green" style="min-width:130px">Status</th>
+                <th class="snk-col-highlight-green" style="min-width:130px">Status Sep.</th>
+                <th style="min-width:150px;background:#1B5E20;color:#fff">Status Conferência</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -1737,7 +1739,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           </table>
         </div>
         <div class="snk-scroll-hint">← → Role horizontalmente para ver Dt. Início Sep. · Dt. Final Tarefa · Status</div>
-        <div class="snk-scroll-hint">← deslize para ver todas as colunas: Separador · Conferente · Dt. Início Sep. · Dt. Final Tarefa · Status →</div>
+        <div class="snk-scroll-hint">← deslize para ver todas as colunas: Nome Separador · Nome Conferente · Dt. Início Sep. · Dt. Final Tarefa · Status Sep. · Status Conferência →</div>
         <div class="snk-action-bar" id="sep-action-bar">
           <span class="snk-action-title" id="sep-hint">Selecione um pedido</span>
         </div>
@@ -1747,6 +1749,63 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
   <div class="screenshot-caption" style="margin-top:-1rem;margin-bottom:2rem">
     <strong>💡 Interativo:</strong> Selecione uma linha → habilita os botões na toolbar. <strong>Imprimir Mapa Sep.</strong> abre o mapa de separação. <strong>Iniciar</strong> muda para Em Separação. <strong>Finalizar</strong> muda para Sep. Finalizada e sincroniza o Portal de Vendas.
+  </div>
+
+  <!-- Modal de Reinício de Separação -->
+  <div id="reinicio-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden">
+      <div style="background:#7C3AED;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="color:#fff;font-size:14px;font-weight:700">↺ Reiniciar Separação</div>
+        <button onclick="fecharReinicio()" style="background:none;border:none;color:#DDD6FE;font-size:18px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <div style="padding:20px 24px">
+        <div id="reinicio-modal-nf" style="background:#F3E8FF;border:1px solid #D8B4FE;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#6B21A8;font-weight:600"></div>
+
+        <!-- CODUSU -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Código do Usuário (CODUSU)</label>
+          <div style="display:flex;gap:8px">
+            <input id="reinicio-codusu" type="text" placeholder="Ex: ALEXS, CARLOS..."
+              style="flex:1;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-family:monospace;outline:none"
+              onkeyup="this.value=this.value.toUpperCase();lookupReinicioUser(this.value)"
+              onkeydown="if(event.key==='Enter')confirmarReinicio()"/>
+            <button onclick="lookupReinicioUser(document.getElementById('reinicio-codusu').value)"
+              style="padding:9px 14px;background:#7C3AED;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🔍</button>
+          </div>
+          <div id="reinicio-user-result" style="margin-top:8px;min-height:32px"></div>
+        </div>
+
+        <!-- MOTIVO REINÍCIO -->
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Motivo do Reinício <span style="color:#7C3AED">*</span></label>
+          <select id="reinicio-motivo-sel" onchange="checkReinicioReady()"
+            style="width:100%;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-family:inherit;margin-bottom:8px;outline:none">
+            <option value="">— Selecione o motivo —</option>
+            <option value="Cancelamento indevido">Cancelamento indevido</option>
+            <option value="Correção de itens">Correção de itens do pedido</option>
+            <option value="Solicitação do supervisor">Solicitação do supervisor</option>
+            <option value="Erro operacional">Erro operacional</option>
+            <option value="Reprocessamento autorizado">Reprocessamento autorizado</option>
+            <option value="Outro">Outro (detalhar abaixo)</option>
+          </select>
+          <textarea id="reinicio-motivo-obs" placeholder="Observação adicional (opcional)..."
+            style="width:100%;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;min-height:50px;outline:none;box-sizing:border-box"
+            onkeyup="checkReinicioReady()"></textarea>
+        </div>
+
+        <div style="background:#F3E8FF;border-left:3px solid #7C3AED;border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#6B21A8;margin-bottom:16px">
+          ↺ O pedido voltará para <strong>Liberado p/ Sep.</strong> e poderá ser reiniciado normalmente.
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="fecharReinicio()" style="padding:8px 18px;border:1px solid #D1D5DB;border-radius:6px;cursor:pointer;font-size:13px;background:#fff">Voltar</button>
+          <button id="btn-confirm-reinicio" onclick="confirmarReinicio()" disabled
+            style="padding:8px 18px;background:#7C3AED;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;opacity:.5">
+            ↺ Confirmar Reinício
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de Cancelamento de Separação -->
@@ -2862,16 +2921,16 @@ function renderGantt() {
 
 // ─── SEPARATION PROTOTYPE ───
 const pedidos = [
-  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Distribuição', status:'lib',   end:'Rua das Palmeiras, 420 — Uberlândia MG',
-   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
-  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Venda Balcão', status:'sep', end:'Retirada no balcão',
-   dt_inicio_sep:'27/05/2026 08:14', dt_fim_tarefa:null, separador_nomeusu:'João S. Pereira', separador_codusu:'JOAO', conferente_nomeusu:null},
-  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Distribuição', status:'fin',   end:'Av. Brasil, 1200 — Uberlândia MG',
-   dt_inicio_sep:'27/05/2026 07:50', dt_fim_tarefa:'27/05/2026 08:22', separador_nomeusu:'Ana P. Costa', separador_codusu:'ANA', conferente_nomeusu:null},
-  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Venda Balcão', status:'pend', end:'Retirada no balcão',
-   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
+  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA',        vend:'Carlos M.', itens:5,  tipo:'Distribuição',  status:'lib', end:'Rua das Palmeiras, 420 — Uberlândia MG',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, separador_codusu:null, conferente_nomeusu:null, conferente_codusu:null, status_conf:null},
+  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.',  itens:3,  tipo:'Venda Balcão', status:'lib', end:'Retirada no balcão',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, separador_codusu:null, conferente_nomeusu:null, conferente_codusu:null, status_conf:null},
+  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP',      vend:'Ana P.',    itens:8,  tipo:'Distribuição',  status:'lib', end:'Av. Brasil, 1200 — Uberlândia MG',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, separador_codusu:null, conferente_nomeusu:null, conferente_codusu:null, status_conf:null},
+  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA',      vend:'Carlos M.', itens:2,  tipo:'Venda Balcão', status:'pend', end:'Retirada no balcão',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, separador_codusu:null, conferente_nomeusu:null, conferente_codusu:null, status_conf:null},
   {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Distribuição', status:'pend', end:'Rod. BR-050 km 12, Galpão 3 — Uberaba MG',
-   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, separador_codusu:null, conferente_nomeusu:null, conferente_codusu:null, status_conf:null},
 ];
 const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência',cancelada:'Sep. Cancelada'};
 const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf',cancelada:'sp-cancelada'};
@@ -2979,7 +3038,8 @@ function renderSepTable() {
       ? '<span style="font-size:11px;font-weight:600;color:#7C3AED">'+p.conferente_nomeusu+'</span>'
       : '<span style="color:#CBD5E1;font-size:10px">—</span>';
     const isCancelled = p.status === 'cancelada';
-    return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'" style="'+(isCancelled?'opacity:.65;':'')+'">';
+    const rowStyle = isCancelled ? 'opacity:.7;background:#FFF5F5' : '';
+    return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'" style="'+rowStyle+'">'
       +'<td><input type="checkbox" '+(isSel?'checked':'')+' onclick="event.stopPropagation();selectSepRow('+p.id+')"/></td>'
       +'<td><strong style="color:#1D4ED8">NF '+p.nf+'</strong></td>'
       +'<td>'+p.parc+'</td>'
@@ -2992,6 +3052,7 @@ function renderSepTable() {
       +'<td>'+dtIni+'</td>'
       +'<td>'+dtFim+'</td>'
       +'<td><span class="snk-status-pill '+statusCls[p.status]+'">'+statusLabels[p.status]+'</span></td>'
+      +'<td>'+renderConfStatus(p.status_conf)+'</td>'
       +'<td><button class="snk-row-btn2" onclick="event.stopPropagation();openMapaFor('+p.id+')">🖨 Mapa</button></td>'
       +'</tr>';
   }).join('');
@@ -3022,10 +3083,20 @@ function updateSepButtons() {
   const p = pedidos.find(x=>x.id===selectedSepId);
   const set = (id,d) => { const e=document.getElementById(id); if(e) e.disabled=d; };
   set('btn-print-mapa', !p);
-  set('btn-iniciar',  !(p&&p.status==='lib'));
-  set('btn-finalizar',!(p&&p.status==='sep'));
+  set('btn-iniciar',   !(p && p.status === 'lib'));
+  set('btn-finalizar', !(p && p.status === 'sep'));
+  set('btn-cancelar',  !(p && (p.status === 'lib' || p.status === 'sep' || p.status === 'fin')));
+  set('btn-reiniciar', !(p && p.status === 'cancelada'));
   const hint = document.getElementById('sep-hint');
-  if (hint) hint.textContent = p ? ('Selecionado: NF '+p.nf+' — '+p.parc) : 'Selecione um pedido para habilitar as ações';
+  if (hint) {
+    if (p) {
+      let info = 'Selecionado: NF ' + p.nf + ' — ' + p.parc;
+      if (p.status === 'cancelada') info += ' | Cancelado por: ' + (p.cancelado_por_nome||'—') + ' — ' + (p.cancelado_motivo||'—');
+      hint.textContent = info;
+    } else {
+      hint.textContent = 'Selecione um pedido para habilitar as ações';
+    }
+  }
   const bar = document.getElementById('sep-action-bar');
   if (bar) bar.classList.toggle('visible', !!p);
 }
@@ -3053,6 +3124,7 @@ function finalizarSeparacao() {
   if(!p||p.status!=='sep') return;
   p.status        = 'fin';
   p.dt_fim_tarefa = fmtDT(new Date());
+  p.status_conf   = 'aguardando';   // entra na fila de conferência
   renderSepTable();
   syncPortalStatus(p.nf,'fin');
   // Feedback visual no botão
@@ -3323,7 +3395,8 @@ let _cancelUser      = null;
 
 function abrirCancelamento() {
   const p = pedidos.find(x => x.id === selectedSepId);
-  if (!p) return;
+  if (!p) { alert('Selecione um pedido na tabela antes de cancelar.'); return; }
+  if (p.status !== 'lib' && p.status !== 'sep' && p.status !== 'fin') return;
   _cancelPedidoId = p.id;
   _cancelUser     = null;
 
@@ -3395,6 +3468,7 @@ function confirmarCancelamento() {
   const motivo = (motSel ? motSel.value : '') + (motObs && motObs.value ? ' — ' + motObs.value : '');
 
   p.status              = 'cancelada';
+  p.status_conf         = null;
   p.cancelado_por_cod   = _cancelUser.codusu;
   p.cancelado_por_nome  = _cancelUser.nomeusu;
   p.cancelado_motivo    = motivo;
@@ -3409,6 +3483,140 @@ function confirmarCancelamento() {
   if (btn) {
     btn.textContent = '✕ Cancelado';
     setTimeout(() => { btn.textContent = '✕ Cancelar Separação'; }, 2000);
+  }
+}
+
+
+// ─── STATUS CONFERÊNCIA (nativo Sankhya) ───
+const CONF_STATUS_LABELS = {
+  'aguardando': 'Aguardando conf.',
+  'andamento':  'Em andamento',
+  'corte':      'Aguard. lib. corte',
+  'recontagem': 'Aguard. recontagem',
+  'recont_and': 'Recontagem andamento',
+  'finalizada': 'Conf. finalizada',
+};
+const CONF_STATUS_STYLE = {
+  'aguardando': 'background:#FEF9C3;color:#854D0E;border-color:#FDE68A',
+  'andamento':  'background:#DBEAFE;color:#1D4ED8;border-color:#93C5FD',
+  'corte':      'background:#FEF3C7;color:#92400E;border-color:#FCD34D',
+  'recontagem': 'background:#FCE7F3;color:#9D174D;border-color:#F9A8D4',
+  'recont_and': 'background:#FCE7F3;color:#9D174D;border-color:#F9A8D4',
+  'finalizada': 'background:#DCFCE7;color:#166534;border-color:#86EFAC',
+};
+
+function renderConfStatus(sc) {
+  if (!sc) return '<span style="color:#CBD5E1;font-size:10px">—</span>';
+  const label = CONF_STATUS_LABELS[sc] || sc;
+  const style = CONF_STATUS_STYLE[sc] || 'background:#F1F5F9;color:#64748B;border-color:#E2E8F0';
+  return '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;border:1px solid;white-space:nowrap;'+style+'">'+label+'</span>';
+}
+
+// Quando Sep. Finalizada → status_conf passa para 'aguardando'
+
+
+// ─── REINÍCIO DE SEPARAÇÃO ───
+let _reinicioPedidoId = null;
+let _reinicioUser     = null;
+
+function abrirReinicio() {
+  const p = pedidos.find(x => x.id === selectedSepId);
+  if (!p) { alert('Selecione um pedido cancelado para reiniciar.'); return; }
+  if (p.status !== 'cancelada') return;
+  _reinicioPedidoId = p.id;
+  _reinicioUser     = null;
+
+  const nfEl = document.getElementById('reinicio-modal-nf');
+  if (nfEl) nfEl.innerHTML =
+    '↺ Reiniciar NF <strong>' + p.nf + '</strong> &nbsp;·&nbsp; ' + p.parc +
+    '<br><span style="font-size:11px;font-weight:400;color:#94A3B8">Cancelado por: '+(p.cancelado_por_nome||'—')+' — '+(p.cancelado_motivo||'—')+'</span>';
+
+  // Reset
+  ['reinicio-codusu','reinicio-user-result','reinicio-motivo-sel','reinicio-motivo-obs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+              else if (el.tagName === 'SELECT') el.value = '';
+              else el.innerHTML = ''; }
+  });
+  const btn = document.getElementById('btn-confirm-reinicio');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const modal = document.getElementById('reinicio-modal');
+  if (modal) modal.style.display = 'flex';
+  setTimeout(() => { const inp = document.getElementById('reinicio-codusu'); if(inp) inp.focus(); }, 100);
+}
+
+function fecharReinicio() {
+  const modal = document.getElementById('reinicio-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function lookupReinicioUser(codusu) {
+  const res = document.getElementById('reinicio-user-result');
+  if (!res) return;
+  const code = (codusu || '').trim().toUpperCase();
+  if (!code) { res.innerHTML = ''; _reinicioUser = null; checkReinicioReady(); return; }
+  const nome = TSIUSU[code];
+  if (nome) {
+    res.innerHTML = '<div style="background:#F3E8FF;border:1px solid #D8B4FE;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px">'
+      + '<span>👤</span><div><strong style="color:#7C3AED">' + nome + '</strong>'
+      + '<span style="font-family:monospace;color:#94A3B8;margin-left:8px;font-size:10px">' + code + '</span></div></div>';
+    _reinicioUser = { codusu: code, nomeusu: nome };
+  } else {
+    res.innerHTML = '<div style="background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:7px 12px;font-size:12px;color:#92400E">'
+      + '<strong>Obs.:</strong> Código <strong>' + code + '</strong> não encontrado na TSIUSU.</div>';
+    _reinicioUser = null;
+  }
+  checkReinicioReady();
+}
+
+function checkReinicioReady() {
+  const motSel = document.getElementById('reinicio-motivo-sel');
+  const btn    = document.getElementById('btn-confirm-reinicio');
+  if (!btn) return;
+  const ok = _reinicioUser && motSel && motSel.value;
+  btn.disabled    = !ok;
+  btn.style.opacity = ok ? '1' : '.5';
+}
+
+function confirmarReinicio() {
+  if (!_reinicioUser || !_reinicioPedidoId) return;
+  const p = pedidos.find(x => x.id === _reinicioPedidoId);
+  if (!p) return;
+
+  const motSel = document.getElementById('reinicio-motivo-sel');
+  const motObs = document.getElementById('reinicio-motivo-obs');
+  const motivo = (motSel ? motSel.value : '') + (motObs && motObs.value ? ' — ' + motObs.value : '');
+
+  // Resetar para Liberado p/ Sep.
+  p.status              = 'lib';
+  p.status_conf         = null;
+  p.dt_inicio_sep       = null;
+  p.dt_fim_tarefa       = null;
+  p.separador_nomeusu   = null;
+  p.separador_codusu    = null;
+  p.conferente_nomeusu  = null;
+  p.conferente_codusu   = null;
+  // Registrar reinício
+  p.reiniciado_por_nome = _reinicioUser.nomeusu;
+  p.reiniciado_por_cod  = _reinicioUser.codusu;
+  p.reiniciado_motivo   = motivo;
+  p.reiniciado_dt       = fmtDT(new Date());
+  // Limpar cancelamento
+  p.cancelado_por_cod   = null;
+  p.cancelado_por_nome  = null;
+  p.cancelado_motivo    = null;
+  p.cancelado_dt        = null;
+
+  fecharReinicio();
+  renderSepTable();
+  syncPortalStatus(p.nf, 'lib');
+
+  // Feedback
+  const btn = document.getElementById('btn-reiniciar');
+  if (btn) {
+    btn.textContent = '✅ Reiniciado!';
+    setTimeout(() => { btn.textContent = '↺ Reiniciar Separação'; }, 2000);
   }
 }
 
