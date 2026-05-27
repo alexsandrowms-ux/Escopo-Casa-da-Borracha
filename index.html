@@ -2598,6 +2598,7 @@ function updateRow(modId, rowId, field, val) {
     if (tr) tr.style.background = val ? '#F0FDF4' : '';
   }
   updateTotals();
+  renderMatriz();
   saveData();
 }
 
@@ -2801,11 +2802,16 @@ function renderGantt() {
 
 // ─── SEPARATION PROTOTYPE ───
 const pedidos = [
-  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Distribuição', status:'lib',   end:'Rua das Palmeiras, 420 — Uberlândia MG'},
-  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Venda Balcão', status:'sep', end:'Retirada no balcão'},
-  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Distribuição', status:'fin',   end:'Av. Brasil, 1200 — Uberlândia MG'},
-  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Venda Balcão', status:'pend', end:'Retirada no balcão'},
-  {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Distribuição', status:'pend', end:'Rod. BR-050 km 12, Galpão 3 — Uberaba MG'},
+  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Distribuição', status:'lib',   end:'Rua das Palmeiras, 420 — Uberlândia MG',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
+  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Venda Balcão', status:'sep', end:'Retirada no balcão',
+   dt_inicio_sep:'27/05/2026 08:14', dt_fim_tarefa:null, separador_nomeusu:'João S. Pereira', separador_codusu:'JOAO', conferente_nomeusu:null},
+  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Distribuição', status:'fin',   end:'Av. Brasil, 1200 — Uberlândia MG',
+   dt_inicio_sep:'27/05/2026 07:50', dt_fim_tarefa:'27/05/2026 08:22', separador_nomeusu:'Ana P. Costa', separador_codusu:'ANA', conferente_nomeusu:null},
+  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Venda Balcão', status:'pend', end:'Retirada no balcão',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
+  {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Distribuição', status:'pend', end:'Rod. BR-050 km 12, Galpão 3 — Uberaba MG',
+   dt_inicio_sep:null, dt_fim_tarefa:null, separador_nomeusu:null, conferente_nomeusu:null},
 ];
 const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência'};
 const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf'};
@@ -2935,16 +2941,33 @@ function fmtDT(d) {
 function iniciarSeparacao() {
   const p=pedidos.find(x=>x.id===selectedSepId);
   if(!p||p.status!=='lib') return;
-  p.status='sep';
+  p.status        = 'sep';
   p.dt_inicio_sep = fmtDT(new Date());
-  renderSepTable(); syncPortalStatus(p.nf,'sep');
+  p.dt_fim_tarefa = null;
+  renderSepTable();
+  syncPortalStatus(p.nf,'sep');
+  // Feedback visual no botão
+  const btn = document.getElementById('btn-iniciar');
+  if (btn) {
+    btn.textContent = '✔ Iniciado';
+    btn.style.color = '#166534';
+    setTimeout(() => { btn.textContent = '▶ Iniciar Separação'; btn.style.color = '#92400E'; }, 2000);
+  }
 }
 function finalizarSeparacao() {
   const p=pedidos.find(x=>x.id===selectedSepId);
   if(!p||p.status!=='sep') return;
-  p.status='fin';
+  p.status        = 'fin';
   p.dt_fim_tarefa = fmtDT(new Date());
-  renderSepTable(); syncPortalStatus(p.nf,'fin');
+  renderSepTable();
+  syncPortalStatus(p.nf,'fin');
+  // Feedback visual no botão
+  const btn = document.getElementById('btn-finalizar');
+  if (btn) {
+    btn.textContent = '✔ Finalizado!';
+    btn.style.color = '#166534';
+    setTimeout(() => { btn.textContent = '✔ Finalizar Separação'; btn.style.color = '#166534'; }, 2000);
+  }
 }
 function syncPortalStatus(nf,st) {
   document.querySelectorAll('#portal-tbody tr').forEach(tr => {
