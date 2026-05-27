@@ -580,7 +580,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         </div>
         <div class="capa-escopo-item">
           <div class="capa-escopo-num" style="color:#EA580C">02</div>
-          <div class="capa-escopo-desc"><strong>Expedição</strong><br>Situação logística, conferência de saída por CB, etiqueta de volume com NF e endereço de entrega (sem itens)</div>
+          <div class="capa-escopo-desc"><strong>Expedição</strong><br>Situação logística, conferência de saída por CB, etiqueta de volume com NF e endereço, cancelamento e reinício de separação com rastreabilidade</div>
         </div>
         <div class="capa-escopo-item">
           <div class="capa-escopo-num" style="color:#7C3AED">03</div>
@@ -966,6 +966,10 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <div class="step-num" style="background:#F0FDF4;color:#166534;border:2px solid #86EFAC;font-size:11px">4</div>
           <div class="step-body"><h4>Entrega no balcão</h4><p>Cliente retira com etiqueta de volume e NF confirmada.</p></div>
         </div>
+        <div class="step-item">
+          <div class="step-num" style="background:#FEF2F2;color:#DC2626;border:2px solid #FCA5A5;font-size:11px">✕</div>
+          <div class="step-body"><h4>Cancelamento / Reinício</h4><p>A qualquer momento (Liberado, Em Sep. ou Finalizado) o operador pode cancelar registrando usuário e motivo. Pedido cancelado pode ser reiniciado voltando a <em>Liberado p/ Sep.</em></p></div>
+        </div>
       </div>
     </div>
     <div class="card" style="border-top:3px solid #EA580C">
@@ -987,6 +991,10 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <div class="step-num" style="background:#F0FDF4;color:#166534;border:2px solid #86EFAC;font-size:11px">4</div>
           <div class="step-body"><h4>Carregamento + NF confirmada</h4><p>Volumes identificados carregados no veículo. NF confirmada automaticamente.</p></div>
         </div>
+        <div class="step-item">
+          <div class="step-num" style="background:#FEF2F2;color:#DC2626;border:2px solid #FCA5A5;font-size:11px">✕</div>
+          <div class="step-body"><h4>Cancelamento / Reinício</h4><p>A qualquer momento (Liberado, Em Sep. ou Finalizado) o operador pode cancelar informando usuário (TSIUSU) e motivo. O pedido cancelado pode ser reiniciado, voltando a <em>Liberado p/ Sep.</em> com rastreabilidade completa.</p></div>
+        </div>
       </div>
     </div>
   </div>
@@ -995,10 +1003,10 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <div class="section-title">Fluxo de Expedição (TO-BE)</div>
   <div class="flow-wrapper">
     <div class="flow-title">📦 Fluxo unificado de expedição — NF confirmada ao final da conferência</div>
-    <svg class="flow-svg" viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg">
+    <svg class="flow-svg" viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg">
   <defs><marker id="ar3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
 
-  <!-- ROW 1 — NF → Status inicial → Liberar -->
+  <!-- ROW 1 -->
   <rect x="15" y="40" width="118" height="52" rx="9" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
   <circle cx="15" cy="40" r="9" fill="#3B82F6"/><text x="15" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">1</text>
   <text x="74" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">NF Venda</text>
@@ -1011,12 +1019,13 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
   <rect x="291" y="40" width="138" height="52" rx="9" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
   <circle cx="291" cy="40" r="9" fill="#3B82F6"/><text x="291" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">3</text>
-  <text x="360" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">Liberar p/ Separação</text>
-  <text x="360" y="77" text-anchor="middle" font-size="10" fill="#3B82F6" font-family="-apple-system,sans-serif">vendedor aciona portal</text>
+  <text x="360" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">Liberar p/ Separação</text>
+  <text x="360" y="73" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">botão ⚡ Portal de Vendas</text>
+  <text x="360" y="85" text-anchor="middle" font-size="9" fill="#EA580C" font-family="-apple-system,sans-serif">Vendedor aciona a ação</text>
 
   <rect x="449" y="40" width="118" height="52" rx="9" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
   <circle cx="449" cy="40" r="9" fill="#D97706"/><text x="449" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">4</text>
-  <text x="508" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E" font-family="-apple-system,sans-serif">Área Separação</text>
+  <text x="508" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E" font-family="-apple-system,sans-serif">Op. Separação</text>
   <text x="508" y="77" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">operador visualiza</text>
 
   <rect x="587" y="40" width="118" height="52" rx="9" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/>
@@ -1029,26 +1038,47 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <text x="784" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E" font-family="-apple-system,sans-serif">Em Separação</text>
   <text x="784" y="77" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">operador inicia</text>
 
-  <!-- ROW 2 — Finaliza → Conferência → Volume → NF confirmada -->
-  <rect x="725" y="168" width="118" height="52" rx="9" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/>
-  <circle cx="725" cy="168" r="9" fill="#22C55E"/><text x="725" y="172" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">7</text>
-  <text x="784" y="190" text-anchor="middle" font-size="11" font-weight="700" fill="#166534" font-family="-apple-system,sans-serif">Sep. Finalizada</text>
-  <text x="784" y="205" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">operador finaliza</text>
+  <!-- ROW 2 -->
+  <rect x="725" y="170" width="118" height="52" rx="9" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/>
+  <circle cx="725" cy="170" r="9" fill="#22C55E"/><text x="725" y="174" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">7</text>
+  <text x="784" y="192" text-anchor="middle" font-size="11" font-weight="700" fill="#166534" font-family="-apple-system,sans-serif">Sep. Finalizada</text>
+  <text x="784" y="207" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">operador finaliza</text>
 
-  <rect x="587" y="168" width="118" height="52" rx="9" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
-  <circle cx="587" cy="168" r="9" fill="#22C55E"/><text x="587" y="172" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">8</text>
-  <text x="646" y="190" text-anchor="middle" font-size="11" font-weight="700" fill="#166534" font-family="-apple-system,sans-serif">Conf. Saída CB</text>
-  <text x="646" y="205" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">fila conferência</text>
+  <rect x="587" y="170" width="118" height="52" rx="9" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
+  <circle cx="587" cy="170" r="9" fill="#22C55E"/><text x="587" y="174" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">8</text>
+  <text x="646" y="192" text-anchor="middle" font-size="11" font-weight="700" fill="#166534" font-family="-apple-system,sans-serif">Conf. Saída CB</text>
+  <text x="646" y="207" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">fila conferência</text>
 
-  <rect x="449" y="168" width="118" height="52" rx="9" fill="#F3E8FF" stroke="#A855F7" stroke-width="1.5"/>
-  <circle cx="449" cy="168" r="9" fill="#A855F7"/><text x="449" y="172" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">9</text>
-  <text x="508" y="190" text-anchor="middle" font-size="11" font-weight="700" fill="#6B21A8" font-family="-apple-system,sans-serif">Form. Volumes</text>
-  <text x="508" y="205" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">etiqueta volume</text>
+  <rect x="449" y="170" width="118" height="52" rx="9" fill="#F3E8FF" stroke="#A855F7" stroke-width="1.5"/>
+  <circle cx="449" cy="170" r="9" fill="#A855F7"/><text x="449" y="174" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">9</text>
+  <text x="508" y="192" text-anchor="middle" font-size="11" font-weight="700" fill="#6B21A8" font-family="-apple-system,sans-serif">Form. Volumes</text>
+  <text x="508" y="207" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">etiqueta volume</text>
 
-  <rect x="291" y="168" width="118" height="52" rx="9" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
-  <circle cx="291" cy="168" r="9" fill="#2563EB"/><text x="291" y="172" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">10</text>
-  <text x="350" y="190" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">NF Confirmada</text>
-  <text x="350" y="205" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">expedição finalizada</text>
+  <rect x="291" y="170" width="118" height="52" rx="9" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <circle cx="291" cy="170" r="9" fill="#2563EB"/><text x="291" y="174" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">10</text>
+  <text x="350" y="192" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">NF Confirmada</text>
+  <text x="350" y="207" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">expedição finalizada</text>
+
+  <!-- CANCELAMENTO / REINÍCIO ROW -->
+  <rect x="449" y="295" width="138" height="52" rx="9" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+  <circle cx="449" cy="295" r="9" fill="#DC2626"/><text x="449" y="299" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">✕</text>
+  <text x="518" y="317" text-anchor="middle" font-size="11" font-weight="700" fill="#DC2626" font-family="-apple-system,sans-serif">Sep. Cancelada</text>
+  <text x="518" y="332" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">usuário + motivo (TSIUSU)</text>
+
+  <rect x="622" y="295" width="138" height="52" rx="9" fill="#F3E8FF" stroke="#7C3AED" stroke-width="2"/>
+  <circle cx="622" cy="295" r="9" fill="#7C3AED"/><text x="622" y="299" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="-apple-system,sans-serif">↺</text>
+  <text x="691" y="317" text-anchor="middle" font-size="11" font-weight="700" fill="#7C3AED" font-family="-apple-system,sans-serif">Reiniciar Sep.</text>
+  <text x="691" y="332" text-anchor="middle" font-size="10" fill="#64748B" font-family="-apple-system,sans-serif">usuário + motivo → Liberado</text>
+
+  <!-- Seta Reiniciar → Liberado p/ Sep. (volta ao step 3) -->
+  <path d="M691 295 L691 270 L360 270 L360 94" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#ar3)"/>
+  <text x="500" y="265" text-anchor="middle" font-size="9" fill="#7C3AED" font-family="-apple-system,sans-serif">volta para Liberado p/ Sep.</text>
+
+  <!-- Seta Cancelar → Cancelada (de steps 4,6,7) -->
+  <path d="M508 92 L508 270 L518 270 L518 293" stroke="#DC2626" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#ar3)"/>
+  <text x="475" y="198" text-anchor="middle" font-size="9" fill="#DC2626" font-family="-apple-system,sans-serif" transform="rotate(-90 475 198)">cancelar</text>
+
+  <path d="M784 92 L784 260 L518 260 L518 293" stroke="#DC2626" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#ar3)"/>
 
   <!-- ARROWS ROW 1 → -->
   <line x1="134" y1="66" x2="151" y2="66" stroke="#3B82F6" stroke-width="1.5" marker-end="url(#ar3)"/>
@@ -1057,39 +1087,17 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <line x1="568" y1="66" x2="585" y2="66" stroke="#D97706" stroke-width="1.5" marker-end="url(#ar3)"/>
   <line x1="706" y1="66" x2="723" y2="66" stroke="#F97316" stroke-width="1.5" marker-end="url(#ar3)"/>
 
-  <!-- DOWN connector at right side -->
-  <path d="M784 92 L784 138 L784 166" stroke="#22C55E" stroke-width="1.5" fill="none" marker-end="url(#ar3)"/>
+  <!-- Down connector step 6→7 -->
+  <path d="M784 92 L784 142 L784 168" stroke="#22C55E" stroke-width="1.5" fill="none" marker-end="url(#ar3)"/>
 
   <!-- ARROWS ROW 2 ← -->
-  <line x1="706" y1="194" x2="707" y2="194" stroke="#22C55E" stroke-width="1.5"/>
-  <line x1="706" y1="194" x2="708" y2="194" stroke="#22C55E" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="723" y1="194" x2="708" y2="194" stroke="#22C55E" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="585" y1="194" x2="570" y2="194" stroke="#22C55E" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="449" y1="194" x2="433" y2="194" stroke="#A855F7" stroke-width="1.5" marker-end="url(#ar3)"/>
+  <line x1="723" y1="196" x2="707" y2="196" stroke="#22C55E" stroke-width="1.5" marker-end="url(#ar3)"/>
+  <line x1="585" y1="196" x2="569" y2="196" stroke="#22C55E" stroke-width="1.5" marker-end="url(#ar3)"/>
+  <line x1="449" y1="196" x2="433" y2="196" stroke="#A855F7" stroke-width="1.5" marker-end="url(#ar3)"/>
 
-  <!-- Situação Logística row -->
-  <rect x="10" y="295" width="940" height="75" rx="10" fill="#FAFAFA" stroke="#E2E8F0"/>
-  <text x="480" y="315" text-anchor="middle" font-size="11" font-weight="700" fill="#64748B" font-family="-apple-system,sans-serif">SITUAÇÃO LOGÍSTICA — PROGRESSÃO DO STATUS DO PEDIDO</text>
-
-  <rect x="22"  y="325" width="160" height="36" rx="8" fill="#FEF9C3" stroke="#FDE68A"/>
-  <text x="102" y="347" text-anchor="middle" font-size="10" font-weight="700" fill="#854D0E" font-family="-apple-system,sans-serif">Pendente de Sep.</text>
-
-  <rect x="202" y="325" width="160" height="36" rx="8" fill="#DBEAFE" stroke="#93C5FD"/>
-  <text x="282" y="347" text-anchor="middle" font-size="10" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">Liberado p/ Sep.</text>
-
-  <rect x="382" y="325" width="160" height="36" rx="8" fill="#FEF3C7" stroke="#FCD34D"/>
-  <text x="462" y="347" text-anchor="middle" font-size="10" font-weight="700" fill="#92400E" font-family="-apple-system,sans-serif">Em Separação</text>
-
-  <rect x="562" y="325" width="160" height="36" rx="8" fill="#DCFCE7" stroke="#86EFAC"/>
-  <text x="642" y="347" text-anchor="middle" font-size="10" font-weight="700" fill="#166534" font-family="-apple-system,sans-serif">Sep. Finalizada</text>
-
-  <rect x="742" y="325" width="196" height="36" rx="8" fill="#EFF6FF" stroke="#BFDBFE"/>
-  <text x="840" y="347" text-anchor="middle" font-size="10" font-weight="700" fill="#1D4ED8" font-family="-apple-system,sans-serif">Conf. + NF Confirmada</text>
-
-  <line x1="182" y1="343" x2="200" y2="343" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="362" y1="343" x2="380" y2="343" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="542" y1="343" x2="560" y2="343" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#ar3)"/>
-  <line x1="722" y1="343" x2="740" y2="343" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#ar3)"/>
+  <!-- Cancelar → Cancelada -->
+  <line x1="588" y1="321" x2="589" y2="321" stroke="#DC2626" stroke-width="1.5" marker-end="url(#ar3)"/>
+  <line x1="622" y1="321" x2="608" y2="321" stroke="#DC2626" stroke-width="1.5" marker-end="url(#ar3)"/>
 </svg>
   </div>
 
@@ -1644,7 +1652,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <!-- ── ÁREA DE SEPARAÇÃO ── -->
   <div class="section-title">Operação de Separação — Tela do Operador</div>
   <div class="info-box" style="margin-bottom:1rem">
-    <strong>Acesso restrito a operadores/separadores.</strong> Exibe pedidos liberados. O operador imprime o Mapa de Separação, aciona <em>Iniciar</em> e <em>Finalizar</em>. Ao finalizar, o pedido entra na Fila de Conferência do Sankhya OM.
+    <strong>Acesso restrito a operadores/separadores.</strong> Exibe pedidos liberados. O operador imprime o Mapa, aciona <em>Iniciar</em>, <em>Finalizar</em>, <em>Cancelar</em> (com usuário TSIUSU + motivo) e <em>Reiniciar</em> separação cancelada. Ao finalizar, o pedido entra na Fila de Conferência do Sankhya OM.
   </div>
 
   <div class="snk-wrap">
