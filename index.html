@@ -409,6 +409,22 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .gantt-leg-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); }
   .gantt-leg-dot { width:12px; height:12px; border-radius:3px; }
 
+
+  /* status badges na capa */
+  .capa-status-badge {
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 10px;
+    border-radius:20px;
+    border:1px solid;
+    white-space:nowrap;
+  }
+  @media(max-width:900px){
+    #card-status-projeto { grid-column: span 2; }
+    .capa-info-grid { grid-template-columns: repeat(2,1fr) !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -458,7 +474,9 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
     <div class="capa-divider"></div>
 
     <!-- Info grid -->
-    <div class="capa-info-grid">
+    <div class="capa-info-grid" style="grid-template-columns:repeat(4,1fr)">
+
+      <!-- Row 1 -->
       <div class="capa-info-card">
         <div class="capa-info-label">Cliente</div>
         <div class="capa-info-value" contenteditable="true" title="Clique para editar">Casa da Borracha Ltda</div>
@@ -472,24 +490,45 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         <div class="capa-info-value" id="capa-data" contenteditable="true" title="Clique para editar"></div>
       </div>
       <div class="capa-info-card">
-        <div class="capa-info-label">Versão</div>
-        <div class="capa-info-value" id="capa-versao" contenteditable="true" title="Clique para editar">0.2</div>
-      </div>
-      <div class="capa-info-card">
-        <div class="capa-info-label">Status</div>
-        <div class="capa-info-value">
-          <select id="capa-status-sel" onchange="updateStatusBadge(this.value)" style="border:none;background:transparent;font-size:14px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;width:100%;padding:0">
-            <option value="draft">📝 Esboço</option>
-            <option value="review">🔍 Em revisão</option>
-            <option value="approved">✅ Aprovado</option>
-            <option value="signed">📋 Assinado</option>
-          </select>
-        </div>
-      </div>
-      <div class="capa-info-card">
         <div class="capa-info-label">Sistema</div>
         <div class="capa-info-value" contenteditable="true" title="Clique para editar">Sankhya OM</div>
       </div>
+
+      <!-- Row 2 -->
+      <div class="capa-info-card">
+        <div class="capa-info-label">Versão</div>
+        <div class="capa-info-value" id="capa-versao" contenteditable="true" title="Clique para editar">0.2</div>
+      </div>
+      <div class="capa-info-card" id="card-status-escopo">
+        <div class="capa-info-label">Status do Escopo</div>
+        <div class="capa-info-value" style="padding:0">
+          <select id="capa-status-escopo" onchange="updateStatusEscopo(this.value)"
+            style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;width:100%;padding:2px 0;outline:none">
+            <option value="analise">🔍 Em Análise</option>
+            <option value="mensuracao">📏 Mensuração de Horas</option>
+            <option value="aguardando">⏳ Aguardando Aprovação Cliente</option>
+            <option value="aprovado">✅ Aprovado</option>
+          </select>
+        </div>
+        <div id="badge-escopo" class="capa-status-badge" style="margin-top:6px;background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE">🔍 Em Análise</div>
+      </div>
+      <div class="capa-info-card" id="card-status-projeto" style="grid-column:span 2">
+        <div class="capa-info-label">Status do Projeto</div>
+        <div class="capa-info-value" style="padding:0">
+          <select id="capa-status-projeto" onchange="updateStatusProjeto(this.value)"
+            style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;width:100%;padding:2px 0;outline:none">
+            <option value="pendente">🕐 Pendente de Desenvolvimento</option>
+            <option value="emdesenv">⚙️ Em Desenvolvimento</option>
+            <option value="impedimento">🚧 Com Impedimento</option>
+            <option value="finalizado">✔ Desenvolvimento Finalizado</option>
+            <option value="teste">🧪 Teste de Saída</option>
+            <option value="entregue">📦 Entregue — Aguardando Validação</option>
+            <option value="validado">🏆 Validado pelo Cliente</option>
+          </select>
+        </div>
+        <div id="badge-projeto" class="capa-status-badge" style="margin-top:6px;background:#FEF9C3;color:#854D0E;border-color:#FDE68A">🕐 Pendente de Desenvolvimento</div>
+      </div>
+
     </div>
 
     <!-- Escopo resumo -->
@@ -510,7 +549,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         </div>
         <div class="capa-escopo-item">
           <div class="capa-escopo-num" style="color:#0891B2">04</div>
-          <div class="capa-escopo-desc"><strong>Estimativa</strong><br>160 horas distribuídas em dois módulos — editável e exportável em CSV</div>
+          <div class="capa-escopo-desc"><strong>Estimativa</strong><br><span id="capa-total-horas" style="font-weight:700;color:var(--orange)">160h</span> distribuídas em dois módulos — editável e exportável em CSV</div>
         </div>
       </div>
     </div>
@@ -1020,21 +1059,21 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   <div class="situacao-kanban">
     <div class="kanban-col">
       <div class="kanban-header"><div class="kanban-dot" style="background:#CA8A04"></div><span style="color:#854D0E">Pendente de Sep.</span></div>
-      <div class="kanban-card"><div class="ped">NF 001.420</div><div class="cli">Dist. Alfa Ltda</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Entrega</span></div></div>
-      <div class="kanban-card"><div class="ped">NF 001.421</div><div class="cli">Constr. Beta</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-balcao">Balcão</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.420</div><div class="cli">Dist. Alfa Ltda</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Distribuição</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.421</div><div class="cli">Constr. Beta</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-balcao">Venda Balcão</span></div></div>
     </div>
     <div class="kanban-col">
       <div class="kanban-header"><div class="kanban-dot" style="background:#2563EB"></div><span style="color:#1D4ED8">Enviado p/ Sep.</span></div>
-      <div class="kanban-card"><div class="ped">NF 001.418</div><div class="cli">Com. Gamma</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Entrega</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.418</div><div class="cli">Com. Gamma</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Distribuição</span></div></div>
     </div>
     <div class="kanban-col">
       <div class="kanban-header"><div class="kanban-dot" style="background:#D97706"></div><span style="color:#92400E">Em proc. Sep.</span></div>
-      <div class="kanban-card"><div class="ped">NF 001.415</div><div class="cli">Ind. Delta S/A</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-balcao">Balcão</span></div></div>
-      <div class="kanban-card"><div class="ped">NF 001.416</div><div class="cli">Mec. Epsilon</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Entrega</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.415</div><div class="cli">Ind. Delta S/A</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-balcao">Venda Balcão</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.416</div><div class="cli">Mec. Epsilon</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Distribuição</span></div></div>
     </div>
     <div class="kanban-col">
       <div class="kanban-header"><div class="kanban-dot" style="background:#16A34A"></div><span style="color:#166534">Sep. Finalizada</span></div>
-      <div class="kanban-card"><div class="ped">NF 001.412</div><div class="cli">Hidraúlica Zeta</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Entrega</span></div></div>
+      <div class="kanban-card"><div class="ped">NF 001.412</div><div class="cli">Hidraúlica Zeta</div><div style="margin-top:4px"><span class="kanban-card tipo tipo-entrega">Distribuição</span></div></div>
     </div>
   </div>
   <p style="font-size:12px;color:var(--text-muted);margin-bottom:1.5rem">* Exemplo ilustrativo de como ficará o painel de situação logística dos pedidos em tempo real.</p>
@@ -1406,6 +1445,17 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
     </div>
   </div>
 
+
+  <!-- Matriz de Prioridade -->
+  <div class="section-title" style="margin-top:2.5rem">Matriz de Prioridade e Impacto</div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.25rem">
+      Atividades classificadas por prioridade (Alta/Média/Baixa) e impacto no processo. 
+      As de <strong style="color:#DC2626">Alta prioridade + Alto impacto</strong> devem ser executadas primeiro.
+    </p>
+    <div id="matriz-container"></div>
+  </div>
+
   <!-- TOTAIS DINÂMICOS -->
   <div class="metric-cards" id="metrics-bar">
     <div class="metric-card"><div class="metric-label">Módulo Recebimento</div><div class="metric-value" id="tot-rec" style="color:#1A3E6E">0h</div></div>
@@ -1657,7 +1707,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         </div>
         <div class="snk-filter-field"><label>Tipo</label>
           <select class="snk-sidebar-select" style="margin:0">
-            <option>Todos</option><option>Balcão</option><option>Entrega</option>
+            <option>Todos</option><option>Venda Balcão</option><option>Distribuição</option>
           </select>
         </div>
         <div class="snk-filter-field"><label>Vendedor</label><input type="text" placeholder="🔍"/></div>
@@ -1688,14 +1738,13 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <thead>
               <tr>
                 <th style="width:28px"><input type="checkbox" onchange="selectAllSep(this)"/></th>
-                <th>Nro. Nota</th>
-                <th>Nro. Único</th>
-                <th>Parc.</th>
+                <th style="min-width:70px">Nro. NF</th>
                 <th>Nome Parceiro</th>
+                <th>Endereço de Entrega</th>
                 <th>Vendedor</th>
-                <th style="text-align:center">Qtd. Itens</th>
-                <th>Tipo</th>
-                <th class="snk-col-highlight-green">Status Separação</th>
+                <th style="text-align:center">Itens</th>
+                <th style="min-width:110px">Tipo de Venda</th>
+                <th class="snk-col-highlight-green">Status</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -1722,17 +1771,17 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <div class="mapa-doc-title">MAPA DE SEPARAÇÃO</div>
         </div>
         <div style="text-align:right">
-          <div class="mapa-field">NF / Pedido: <strong id="mapa-nf">—</strong></div>
-          <div class="mapa-field">Data Emissão: <strong id="mapa-data">—</strong></div>
+          <div style="font-size:22px;font-weight:900;color:#1A3E6E;margin-bottom:4px">NF <span id="mapa-nf">—</span></div>
+          <div class="mapa-field">Data: <strong id="mapa-data">—</strong></div>
           <div class="mapa-field">Separador: <strong>_______________________</strong></div>
           <div class="mapa-field">Conferente: <strong>_______________________</strong></div>
         </div>
       </div>
-      <div class="mapa-info-row">
+      <div class="mapa-info-row" style="grid-template-columns:repeat(2,1fr)">
         <div class="mapa-info-block"><label>Parceiro / Cliente</label><div id="mapa-parceiro">—</div></div>
+        <div class="mapa-info-block"><label>Endereço de Entrega</label><div id="mapa-endereco" style="font-size:11px">—</div></div>
         <div class="mapa-info-block"><label>Vendedor</label><div id="mapa-vendedor">—</div></div>
-        <div class="mapa-info-block"><label>Tipo de Entrega</label><div id="mapa-tipo">—</div></div>
-        <div class="mapa-info-block"><label>Transportadora</label><div>A definir</div></div>
+        <div class="mapa-info-block"><label>Tipo de Venda</label><div id="mapa-tipo">—</div></div>
       </div>
       <table class="mapa-table">
         <thead>
@@ -2074,8 +2123,8 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <text x="50" y="57" text-anchor="middle" font-size="8" fill="#64748B">pedidos</text>
         </svg>
         <div class="donut-legend">
-          <div class="dl-item"><div class="dl-dot" style="background:#2563EB"></div>Entrega<span class="dl-val">35</span></div>
-          <div class="dl-item"><div class="dl-dot" style="background:#EA580C"></div>Balcão<span class="dl-val">21</span></div>
+          <div class="dl-item"><div class="dl-dot" style="background:#2563EB"></div>Distribuição<span class="dl-val">35</span></div>
+          <div class="dl-item"><div class="dl-dot" style="background:#EA580C"></div>Venda Balcão<span class="dl-val">21</span></div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Tempo médio sep.:</div>
           <div style="font-size:13px;font-weight:700;color:var(--blue-dark)">18 min / pedido</div>
         </div>
@@ -2125,7 +2174,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <td><strong>2184</strong></td>
             <td>Recanto Festas</td>
             <td>Carlos M.</td>
-            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Entrega</span></td>
+            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Distribuição</span></td>
             <td style="color:#16A34A;font-weight:600">12 min</td>
             <td><span class="sp-sep">Em Sep.</span></td>
           </tr>
@@ -2133,7 +2182,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <td><strong>2186</strong></td>
             <td>Kleber R. Alves</td>
             <td>Ana P.</td>
-            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#FEF3C7;color:#92400E">Balcão</span></td>
+            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#FEF3C7;color:#92400E">Venda Balcão</span></td>
             <td style="color:#16A34A;font-weight:600">8 min</td>
             <td><span class="sp-sep">Em Sep.</span></td>
           </tr>
@@ -2141,7 +2190,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <td><strong>2187</strong></td>
             <td>Pro Regional</td>
             <td>João S.</td>
-            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Entrega</span></td>
+            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Distribuição</span></td>
             <td style="color:#EA580C;font-weight:600">34 min ⚠</td>
             <td><span class="sp-sep">Em Sep.</span></td>
           </tr>
@@ -2149,7 +2198,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <td><strong>2189</strong></td>
             <td>Marks Center</td>
             <td>Carlos M.</td>
-            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Entrega</span></td>
+            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#DBEAFE;color:#1D4ED8">Distribuição</span></td>
             <td style="color:#16A34A;font-weight:600">5 min</td>
             <td><span class="sp-sep">Em Sep.</span></td>
           </tr>
@@ -2157,7 +2206,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
             <td><strong>2190</strong></td>
             <td>R J Atacadista</td>
             <td>João S.</td>
-            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#FEF3C7;color:#92400E">Balcão</span></td>
+            <td><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#FEF3C7;color:#92400E">Venda Balcão</span></td>
             <td style="color:#EA580C;font-weight:600">41 min ⚠</td>
             <td><span class="sp-sep">Em Sep.</span></td>
           </tr>
@@ -2280,9 +2329,51 @@ function toggleAccordion(h) {
 
 // ─── CAPA ───
 function updateStatusBadge(val) {
-  const labels = { draft:'v0.2 — Esboço', review:'v0.2 — Em revisão', approved:'v1.0 — Aprovado', signed:'v1.0 — Assinado' };
-  const el = document.getElementById('capa-version-display');
-  if (el) el.textContent = labels[val] || '';
+  // legacy — kept for compatibility
+}
+
+function updateStatusEscopo(val) {
+  const cfg = {
+    analise:    { label:'🔍 Em Análise',                  bg:'#EFF6FF', color:'#1D4ED8', border:'#BFDBFE', badge:'v0.x — Em Análise' },
+    mensuracao: { label:'📏 Mensuração de Horas',         bg:'#F3E8FF', color:'#6B21A8', border:'#D8B4FE', badge:'v0.x — Mensuração' },
+    aguardando: { label:'⏳ Aguardando Aprovação Cliente', bg:'#FEF9C3', color:'#854D0E', border:'#FDE68A', badge:'v0.x — Aguard. Aprovação' },
+    aprovado:   { label:'✅ Aprovado',                    bg:'#DCFCE7', color:'#166534', border:'#86EFAC', badge:'v1.0 — Aprovado' },
+  };
+  const c = cfg[val] || cfg.analise;
+  const badge = document.getElementById('badge-escopo');
+  if (badge) {
+    badge.textContent = c.label;
+    badge.style.background = c.bg;
+    badge.style.color = c.color;
+    badge.style.borderColor = c.border;
+  }
+  const vd = document.getElementById('capa-version-display');
+  if (vd) vd.textContent = c.badge;
+  // highlight card border
+  const card = document.getElementById('card-status-escopo');
+  if (card) card.style.borderColor = c.border;
+}
+
+function updateStatusProjeto(val) {
+  const cfg = {
+    pendente:   { label:'🕐 Pendente de Desenvolvimento',    bg:'#F1F5F9', color:'#475569', border:'#CBD5E1' },
+    emdesenv:   { label:'⚙️ Em Desenvolvimento',             bg:'#EFF6FF', color:'#1D4ED8', border:'#BFDBFE' },
+    impedimento:{ label:'🚧 Com Impedimento',                bg:'#FEF2F2', color:'#DC2626', border:'#FCA5A5' },
+    finalizado: { label:'✔ Desenvolvimento Finalizado',      bg:'#F0FDF4', color:'#166534', border:'#86EFAC' },
+    teste:      { label:'🧪 Teste de Saída',                 bg:'#FFF7ED', color:'#C2410C', border:'#FED7AA' },
+    entregue:   { label:'📦 Entregue — Aguard. Validação',   bg:'#F3E8FF', color:'#6B21A8', border:'#D8B4FE' },
+    validado:   { label:'🏆 Validado pelo Cliente',          bg:'#DCFCE7', color:'#166534', border:'#86EFAC' },
+  };
+  const c = cfg[val] || cfg.pendente;
+  const badge = document.getElementById('badge-projeto');
+  if (badge) {
+    badge.textContent = c.label;
+    badge.style.background = c.bg;
+    badge.style.color = c.color;
+    badge.style.borderColor = c.border;
+  }
+  const card = document.getElementById('card-status-projeto');
+  if (card) card.style.borderColor = c.border;
 }
 document.addEventListener('DOMContentLoaded', () => {
   const dataEl = document.getElementById('capa-data');
@@ -2292,7 +2383,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ─── HOURS EDITOR ───
-const STORAGE_KEY = 'cb_horas_v2';
+const STORAGE_KEY = 'cb_horas_v3';
 
 const RESP_OPTIONS = ['Consultor','TI-Cliente','TI+Consultoria','Diretoria Cliente'];
 const RESP_COLORS  = { 'Consultor':'#2563EB', 'TI-Cliente':'#16A34A', 'TI+Consultoria':'#7C3AED', 'Diretoria Cliente':'#DC2626' };
@@ -2302,30 +2393,30 @@ const DEFAULT_DATA = {
     {
       id:'mod_rec', title:'Módulo 1 — Recebimento', color:'#2563EB',
       rows:[
-        {id:'r1', ativ:'Levantamento e mapeamento do processo atual (recebimento)', resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-06-02', dt_fim:'2025-06-06', ok:false},
-        {id:'r2', ativ:'Configuração da Fila de Conferência no Sankhya OM',         resp:'TI+Consultoria', prio:'Alta', horas:12, dt_ini:'2025-06-09', dt_fim:'2025-06-16', ok:false},
-        {id:'r3', ativ:'Parametrização da conferência cega (regras, tolerâncias)',  resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-06-09', dt_fim:'2025-06-13', ok:false},
-        {id:'r4', ativ:'Configuração de impressão automática de etiquetas na NF',   resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-06-16', dt_fim:'2025-06-20', ok:false},
-        {id:'r5', ativ:'Cadastro e higienização de SKUs sem código de barras',      resp:'TI-Cliente', prio:'Alta', horas:16, dt_ini:'2025-06-09', dt_fim:'2025-06-27', ok:false},
-        {id:'r6', ativ:'Testes integrados do fluxo de recebimento',                 resp:'TI+Consultoria', prio:'Alta', horas:8,  dt_ini:'2025-06-23', dt_fim:'2025-06-27', ok:false},
-        {id:'r7', ativ:'Treinamento — equipe de recebimento',                       resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-01', ok:false},
-        {id:'r8', ativ:'Documentação do processo implantado (recebimento)',         resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-04', ok:false},
-        {id:'r9', ativ:'Acompanhamento pós go-live — recebimento',                  resp:'Consultor', prio:'Baixa', horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-18', ok:false},
+        {id:'r1', ativ:'Levantamento e mapeamento do processo atual (recebimento)', resp:'Consultor',      prio:'Alta',  horas:8,  dt_ini:'2025-06-02', dt_fim:'2025-06-06', ok:false},
+        {id:'r5', ativ:'Cadastro e higienização de SKUs sem código de barras',      resp:'TI-Cliente',     prio:'Alta',  horas:16, dt_ini:'2025-06-09', dt_fim:'2025-06-27', ok:false},
+        {id:'r2', ativ:'Configuração da Fila de Conferência no Sankhya OM',         resp:'TI+Consultoria', prio:'Alta',  horas:12, dt_ini:'2025-06-09', dt_fim:'2025-06-16', ok:false},
+        {id:'r3', ativ:'Parametrização da conferência cega (regras, tolerâncias)',  resp:'Consultor',      prio:'Alta',  horas:8,  dt_ini:'2025-06-09', dt_fim:'2025-06-13', ok:false},
+        {id:'r4', ativ:'Configuração de impressão automática de etiquetas na NF',   resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-06-16', dt_fim:'2025-06-20', ok:false},
+        {id:'r6', ativ:'Testes integrados do fluxo de recebimento',                 resp:'TI+Consultoria', prio:'Alta',  horas:8,  dt_ini:'2025-06-23', dt_fim:'2025-06-27', ok:false},
+        {id:'r7', ativ:'Treinamento — equipe de recebimento',                       resp:'Consultor',      prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-01', ok:false},
+        {id:'r8', ativ:'Documentação do processo implantado (recebimento)',         resp:'Consultor',      prio:'Média', horas:4,  dt_ini:'2025-06-30', dt_fim:'2025-07-04', ok:false},
+        {id:'r9', ativ:'Acompanhamento pós go-live — recebimento',                  resp:'Consultor',      prio:'Baixa', horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-18', ok:false},
       ]
     },
     {
       id:'mod_exp', title:'Módulo 2 — Expedição', color:'#EA580C',
       rows:[
-        {id:'e1', ativ:'Levantamento e mapeamento do processo de expedição',         resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-11', ok:false},
-        {id:'e2', ativ:'Configuração Situação Logística (4 estágios)',               resp:'TI+Consultoria', prio:'Alta', horas:12, dt_ini:'2025-07-14', dt_fim:'2025-07-18', ok:false},
-        {id:'e3', ativ:'Configuração Fila de Conferência — expedição',               resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-07-14', dt_fim:'2025-07-21', ok:false},
-        {id:'e4', ativ:'Parametrização conferência NF Venda (Antes da confirmação)', resp:'Consultor', prio:'Alta', horas:8,  dt_ini:'2025-07-21', dt_fim:'2025-07-25', ok:false},
-        {id:'e5', ativ:'Configuração formação de volumes + etiqueta de volume',      resp:'TI+Consultoria', prio:'Alta', horas:10, dt_ini:'2025-07-21', dt_fim:'2025-07-28', ok:false},
-        {id:'e6', ativ:'Configuração portal de vendas — situação logística',         resp:'TI+Consultoria', prio:'Média', horas:10, dt_ini:'2025-07-28', dt_fim:'2025-08-01', ok:false},
-        {id:'e7', ativ:'Testes integrados — fluxo de expedição (balcão e entrega)',  resp:'TI+Consultoria', prio:'Alta', horas:8,  dt_ini:'2025-08-04', dt_fim:'2025-08-08', ok:false},
-        {id:'e8', ativ:'Treinamento — equipe de expedição e vendedores',             resp:'Consultor', prio:'Média', horas:6,  dt_ini:'2025-08-11', dt_fim:'2025-08-12', ok:false},
-        {id:'e9', ativ:'Documentação do processo implantado (expedição)',            resp:'Consultor', prio:'Média', horas:4,  dt_ini:'2025-08-11', dt_fim:'2025-08-15', ok:false},
-        {id:'e10',ativ:'Acompanhamento pós go-live — expedição',                    resp:'Consultor', prio:'Baixa', horas:6,  dt_ini:'2025-08-18', dt_fim:'2025-08-29', ok:false},
+        {id:'e1', ativ:'Levantamento e mapeamento do processo de expedição',                    resp:'Consultor',      prio:'Alta',  horas:8,  dt_ini:'2025-07-07', dt_fim:'2025-07-11', ok:false},
+        {id:'e2', ativ:'Configuração Situação Logística (4 estágios + Tipo de Venda)',          resp:'TI+Consultoria', prio:'Alta',  horas:12, dt_ini:'2025-07-14', dt_fim:'2025-07-18', ok:false},
+        {id:'e3', ativ:'Configuração Fila de Conferência — expedição (TOP + conf. conferência)',resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-07-14', dt_fim:'2025-07-21', ok:false},
+        {id:'e4', ativ:'Parametrização conferência NF Venda (Antes da confirmação)',            resp:'Consultor',      prio:'Alta',  horas:8,  dt_ini:'2025-07-21', dt_fim:'2025-07-25', ok:false},
+        {id:'e5', ativ:'Configuração Área de Separação (NF, endereço, tipo de venda)',          resp:'TI+Consultoria', prio:'Alta',  horas:10, dt_ini:'2025-07-21', dt_fim:'2025-07-28', ok:false},
+        {id:'e7', ativ:'Testes integrados — fluxo de expedição (Venda Balcão e Distribuição)', resp:'TI+Consultoria', prio:'Alta',  horas:8,  dt_ini:'2025-08-04', dt_fim:'2025-08-08', ok:false},
+        {id:'e6', ativ:'Configuração portal de vendas — situação logística em tempo real',      resp:'TI+Consultoria', prio:'Média', horas:10, dt_ini:'2025-07-28', dt_fim:'2025-08-01', ok:false},
+        {id:'e8', ativ:'Treinamento — equipe de expedição e vendedores',                        resp:'Consultor',      prio:'Média', horas:6,  dt_ini:'2025-08-11', dt_fim:'2025-08-12', ok:false},
+        {id:'e9', ativ:'Documentação do processo implantado (expedição)',                       resp:'Consultor',      prio:'Média', horas:4,  dt_ini:'2025-08-11', dt_fim:'2025-08-15', ok:false},
+        {id:'e10',ativ:'Acompanhamento pós go-live — expedição',                               resp:'Consultor',      prio:'Baixa', horas:6,  dt_ini:'2025-08-18', dt_fim:'2025-08-29', ok:false},
       ]
     }
   ]
@@ -2422,6 +2513,7 @@ function renderAll() {
     container.appendChild(block);
   });
   updateTotals();
+  renderMatriz();
 }
 
 function updateTotals() {
@@ -2440,6 +2532,8 @@ function updateTotals() {
   if (extEl) extEl.innerHTML = extra.map(e =>
     '<div><div style="font-size:11px;color:var(--text-muted)">'+escH(e.title)+'</div><div style="font-size:18px;font-weight:700;color:'+e.color+'">'+e.val+'h</div></div>'
   ).join('');
+  const capaTotEl = document.getElementById('capa-total-horas');
+  if (capaTotEl) capaTotEl.textContent = grand + 'h';
   const pct = acceptancePct();
   const pctEl = document.getElementById('tot-aceite');
   if (pctEl) {
@@ -2665,6 +2759,9 @@ function renderGantt() {
   if (pctEl2) { pctEl2.textContent = pct2 + '%'; pctEl2.style.color = pct2===100?'#16A34A':pct2>=50?'#EA580C':'#DC2626'; }
   const barEl2 = document.getElementById('aceite-bar-fill');
   if (barEl2) barEl2.style.width = pct2 + '%';
+  // update capa total
+  const capaTot = document.getElementById('capa-total-horas');
+  if (capaTot) capaTot.textContent = grand2 + 'h';
   if (withDates.length) {
     const pEl = document.getElementById('gantt-period');
     if (pEl) pEl.textContent = new Date(Math.min(...withDates.map(r=>new Date(r.dt_ini)))).toLocaleDateString('pt-BR',{month:'short',year:'numeric'})
@@ -2674,11 +2771,11 @@ function renderGantt() {
 
 // ─── SEPARATION PROTOTYPE ───
 const pedidos = [
-  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Entrega', status:'lib'},
-  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Balcão', status:'sep'},
-  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Entrega', status:'fin'},
-  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Balcão', status:'pend'},
-  {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Entrega', status:'pend'},
+  {id:2, nf:2183, nu:65933, parc:'LFC COMERCIO ATACADISTA', vend:'Carlos M.', itens:5, tipo:'Distribuição', status:'lib',   end:'Rua das Palmeiras, 420 — Uberlândia MG'},
+  {id:3, nf:2184, nu:65944, parc:'RECANTO FESTAS E CONFEITARIA LTDA', vend:'João S.', itens:3, tipo:'Venda Balcão', status:'sep', end:'Retirada no balcão'},
+  {id:4, nf:2185, nu:65945, parc:'COMERCIAL JASPER LTDA EPP', vend:'Ana P.', itens:8, tipo:'Distribuição', status:'fin',   end:'Av. Brasil, 1200 — Uberlândia MG'},
+  {id:5, nf:2186, nu:65946, parc:'KLEBER ROBERTO ALVES LTDA', vend:'Carlos M.', itens:2, tipo:'Venda Balcão', status:'pend', end:'Retirada no balcão'},
+  {id:6, nf:2187, nu:65947, parc:'PRO REGIONAL COMERCIO DE PRODUTOS', vend:'João S.', itens:12, tipo:'Distribuição', status:'pend', end:'Rod. BR-050 km 12, Galpão 3 — Uberaba MG'},
 ];
 const statusLabels = {pend:'Pendente de Sep.',lib:'Liberado p/ Sep.',sep:'Em Separação',fin:'Sep. Finalizada',conf:'Aguard. Conferência'};
 const statusCls    = {pend:'sp-pend',lib:'sp-lib',sep:'sp-sep',fin:'sp-fin',conf:'sp-conf'};
@@ -2718,7 +2815,7 @@ function liberarSeparacao() {
       const nf = parseInt(tr.cells[2].textContent);
       const nu = parseInt(tr.cells[1].textContent);
       const parc = tr.cells[4].textContent;
-      pedidos.push({id:Date.now(),nf,nu,parc,vend:'Vendedor',itens:Math.floor(Math.random()*8)+1,tipo:'Balcão',status:'lib'});
+      pedidos.push({id:Date.now(),nf,nu,parc,vend:'Vendedor',itens:Math.floor(Math.random()*8)+1,tipo:'Venda Balcão',status:'lib'});
       renderSepTable();
     }
   });
@@ -2741,11 +2838,15 @@ function renderSepTable() {
   }
   tbody.innerHTML = filtered.map(p => {
     const isSel = selectedSepId===p.id;
-    const tipoBg = p.tipo==='Balcão'?'#DBEAFE':'#FEF3C7';
-    const tipoC  = p.tipo==='Balcão'?'#1D4ED8':'#92400E';
+    const tipoBg = p.tipo==='Venda Balcão'?'#DBEAFE':'#FEF3C7';
+    const tipoC  = p.tipo==='Venda Balcão'?'#1D4ED8':'#92400E';
+    const endTxt = (p.end||'—').substring(0,35)+(p.end&&p.end.length>35?'…':'');
     return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'">'
       +'<td><input type="checkbox" '+(isSel?'checked':'')+' onclick="event.stopPropagation();selectSepRow('+p.id+')"/></td>'
-      +'<td><strong>'+p.nf+'</strong></td><td>'+p.nu+'</td><td>'+String(p.parc).substring(0,6)+'</td><td>'+p.parc+'</td><td>'+p.vend+'</td>'
+      +'<td><strong style="color:#1D4ED8">NF '+p.nf+'</strong></td>'
+      +'<td>'+p.parc+'</td>'
+      +'<td style="font-size:10px;color:#64748B" title="'+(p.end||'')+'">'+endTxt+'</td>'
+      +'<td>'+p.vend+'</td>'
       +'<td style="text-align:center">'+p.itens+'</td>'
       +'<td><span style="font-size:10px;padding:1px 8px;border-radius:10px;background:'+tipoBg+';color:'+tipoC+'">'+p.tipo+'</span></td>'
       +'<td><span class="snk-status-pill '+statusCls[p.status]+'">'+statusLabels[p.status]+'</span></td>'
@@ -2813,7 +2914,7 @@ function printMapa() {
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('mapa-nf',p.nf); set('mapa-data',new Date().toLocaleDateString('pt-BR'));
   set('mapa-parceiro',p.parc); set('mapa-vendedor',p.vend);
-  set('mapa-tipo',p.tipo); set('mapa-ts',new Date().toLocaleString('pt-BR'));
+  set('mapa-tipo',p.tipo); set('mapa-endereco',p.end||'—'); set('mapa-ts',new Date().toLocaleString('pt-BR'));
   const mb=document.getElementById('mapa-tbody');
   if(mb) mb.innerHTML=mapaItems.slice(0,Math.min(p.itens,mapaItems.length)).map((item,i)=>
     '<tr><td class="qtd-col">'+(i+1)+'</td><td>'+item.cod+'</td><td>'+item.desc+'</td>'
@@ -2842,6 +2943,65 @@ const recBarData=[{l:'07h',v:1},{l:'08h',v:3},{l:'09h',v:4},{l:'10h',v:6},{l:'11
 const sepBarData=[{l:'07h',v:2},{l:'08h',v:4},{l:'09h',v:6},{l:'10h',v:5},{l:'11h',v:4},{l:'12h',v:2},{l:'13h',v:5},{l:'14h',v:3},{l:'15h',v:0},{l:'16h',v:0}];
 function initDashRec() { renderBarChart('rec-bar-chart',recBarData,'#2563EB'); }
 function initDashSep() { renderBarChart('sep-bar-chart',sepBarData,'#EA580C'); }
+
+
+// ─── MATRIZ DE PRIORIDADE ───
+const IMPACT_BY_RESP = { 'TI+Consultoria':'Alto', 'Consultor':'Alto', 'TI-Cliente':'Médio', 'Diretoria Cliente':'Médio' };
+const PRIO_ORDER = { 'Alta':0, 'Média':1, 'Baixa':2 };
+const PRIO_COLOR = { 'Alta':'#DC2626', 'Média':'#EA580C', 'Baixa':'#16A34A' };
+const PRIO_BG    = { 'Alta':'#FEF2F2', 'Média':'#FFF7ED', 'Baixa':'#F0FDF4' };
+
+function renderMatriz() {
+  const container = document.getElementById('matriz-container');
+  if (!container || !horasData) return;
+
+  const rows = horasData.modulos.flatMap(m => m.rows.map(r => ({...r, modTitle:m.title, modColor:m.color})));
+  const sorted = [...rows].sort((a,b) => {
+    const po = PRIO_ORDER[a.prio] - PRIO_ORDER[b.prio];
+    if (po !== 0) return po;
+    return b.horas - a.horas;
+  });
+
+  const groups = { 'Alta': [], 'Média': [], 'Baixa': [] };
+  sorted.forEach(r => groups[r.prio].push(r));
+
+  let seq = 1;
+  let html2 = '<div style="display:flex;flex-direction:column;gap:1rem">';
+  ['Alta','Média','Baixa'].forEach(prio => {
+    if (!groups[prio].length) return;
+    html2 += '<div style="border:1px solid '+PRIO_COLOR[prio]+'44;border-radius:10px;overflow:hidden">'
+      + '<div style="background:'+PRIO_BG[prio]+';padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid '+PRIO_COLOR[prio]+'44">'
+        + '<span style="width:10px;height:10px;border-radius:50%;background:'+PRIO_COLOR[prio]+';display:inline-block"></span>'
+        + '<span style="font-size:12px;font-weight:700;color:'+PRIO_COLOR[prio]+'">PRIORIDADE '+prio.toUpperCase()+'</span>'
+        + '<span style="font-size:11px;color:var(--text-muted);margin-left:auto">'+groups[prio].length+' atividades · '
+          + groups[prio].reduce((s,r)=>s+(Number(r.horas)||0),0)+'h</span>'
+      + '</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+        + '<thead><tr style="background:#F8FAFC">'
+          + '<th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-muted);width:30px;border-bottom:1px solid var(--border)">#</th>'
+          + '<th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border)">Atividade</th>'
+          + '<th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-muted);width:130px;border-bottom:1px solid var(--border)">Responsável</th>'
+          + '<th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-muted);width:90px;border-bottom:1px solid var(--border)">Módulo</th>'
+          + '<th style="padding:6px 10px;text-align:right;font-size:10px;font-weight:600;color:var(--text-muted);width:60px;border-bottom:1px solid var(--border)">Horas</th>'
+          + '<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--text-muted);width:50px;border-bottom:1px solid var(--border)">OK</th>'
+        + '</tr></thead><tbody>';
+    groups[prio].forEach((r, i) => {
+      const respColor = RESP_COLORS[r.resp] || '#2563EB';
+      html2 += '<tr style="background:'+(i%2===0?'#fff':'#FAFAFA')+'">'
+        + '<td style="padding:6px 10px;color:#94A3B8;font-weight:600">'+seq+'</td>'
+        + '<td style="padding:6px 10px;color:var(--text)">'+(r.ok?'<span style="text-decoration:line-through;color:#94A3B8">':'')+escH(r.ativ)+(r.ok?'</span>':'')+'</td>'
+        + '<td style="padding:6px 10px"><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+respColor+'22;color:'+respColor+';border:1px solid '+respColor+'44">'+r.resp+'</span></td>'
+        + '<td style="padding:6px 10px;font-size:10px;color:'+r.modColor+'">'+r.modTitle.split('—')[0].trim()+'</td>'
+        + '<td style="padding:6px 10px;text-align:right;font-weight:700;color:'+PRIO_COLOR[r.prio]+'">'+r.horas+'h</td>'
+        + '<td style="padding:6px 10px;text-align:center">'+(r.ok?'<span style="color:#16A34A;font-weight:700">✓</span>':'<span style="color:#E5E7EB">○</span>')+'</td>'
+        + '</tr>';
+      seq++;
+    });
+    html2 += '</tbody></table></div>';
+  });
+  html2 += '</div>';
+  container.innerHTML = html2;
+}
 
 document.addEventListener('DOMContentLoaded', () => { renderSepTable(); });
 </script>
