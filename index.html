@@ -196,7 +196,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
   
   /* ══ SANKHYA OM PROTOTYPE — redesign ══ */
-  .snk-wrap { border:1px solid #C8C8C8; border-radius:4px; overflow:hidden; margin-bottom:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,.12); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  .snk-wrap { border:1px solid #C8C8C8; border-radius:4px; overflow:hidden; margin-bottom:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,.12); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; max-width:100%; }
   /* Top chrome bar */
   .snk-topbar { background:#2B2B2B; display:flex; align-items:center; height:40px; padding:0 10px; gap:6px; }
   .snk-hamburger { color:#fff; font-size:16px; cursor:pointer; padding:4px 6px; }
@@ -214,7 +214,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .snk-badge-pre { background:#1565C0; color:#fff; }
   .snk-badge-ver { background:#2E7D32; color:#fff; }
   /* Page layout */
-  .snk-page { display:flex; background:#EBEBEB; min-height:320px; }
+  .snk-page { display:flex; background:#EBEBEB; min-height:320px; overflow:hidden; }
   /* Left sidebar */
   .snk-sidebar { width:200px; flex-shrink:0; background:#FFFFFF; border-right:1px solid #D0D0D0; padding:10px; }
   .snk-sidebar-label { font-size:11px; font-weight:600; color:#555; margin-bottom:4px; }
@@ -233,7 +233,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .snk-filter-field label { font-size:10px; color:#777; display:block; margin-bottom:2px; }
   .snk-filter-field input, .snk-filter-field select { width:100%; padding:3px 5px; font-size:11px; border:1px solid #C0C0C0; border-radius:3px; background:#fff; }
   /* Main content area */
-  .snk-main { flex:1; display:flex; flex-direction:column; background:#fff; }
+  .snk-main { flex:1; min-width:0; display:flex; flex-direction:column; background:#fff; overflow:hidden; }
   .snk-result-bar { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:#F5F5F5; border-bottom:1px solid #E0E0E0; }
   .snk-result-title { font-size:12px; font-weight:600; color:#333; }
   .snk-result-link { font-size:11px; color:#1565C0; text-decoration:none; cursor:pointer; }
@@ -244,8 +244,18 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .snk-tb-sep { width:1px; height:18px; background:#C0C0C0; margin:0 4px; }
   .snk-tb-count { font-size:11px; color:#888; margin-left:auto; padding:0 6px; }
   /* Grid */
-  .snk-grid-wrap { overflow-x:auto; flex:1; }
-  .snk-tbl { width:100%; border-collapse:collapse; font-size:11px; }
+  .snk-grid-wrap {
+    overflow-x:scroll;
+    flex:1;
+    min-width:0;
+    scrollbar-width:thin;
+    scrollbar-color:#1A3E6E #E2E8F0;
+  }
+  .snk-grid-wrap::-webkit-scrollbar { height:8px; }
+  .snk-grid-wrap::-webkit-scrollbar-track { background:#F1F5F9; border-radius:4px; }
+  .snk-grid-wrap::-webkit-scrollbar-thumb { background:#1A3E6E; border-radius:4px; }
+  .snk-grid-wrap::-webkit-scrollbar-thumb:hover { background:#2563EB; }
+  .snk-tbl { width:100%; min-width:1100px; border-collapse:collapse; font-size:11px; }
   .snk-tbl thead tr { background:#404040; }
   .snk-tbl th { color:#fff; padding:6px 8px; text-align:left; font-weight:500; white-space:nowrap; border-right:1px solid #555; font-size:11px; }
   .snk-tbl th.snk-col-highlight { background:#1A3E6E; }
@@ -424,6 +434,34 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
     #card-status-projeto { grid-column: span 2; }
     .capa-info-grid { grid-template-columns: repeat(2,1fr) !important; }
   }
+
+
+  /* scrollbar visível nos protótipos */
+  .snk-grid-wrap::-webkit-scrollbar { height:7px; }
+  .snk-grid-wrap::-webkit-scrollbar-track { background:#F1F5F9; border-radius:10px; }
+  .snk-grid-wrap::-webkit-scrollbar-thumb { background:#94A3B8; border-radius:10px; }
+  .snk-grid-wrap::-webkit-scrollbar-thumb:hover { background:#64748B; }
+  /* hint de scroll */
+  .snk-scroll-hint {
+    display:flex; align-items:center; gap:6px;
+    padding:4px 12px; font-size:10px; color:#94A3B8;
+    background:#FAFAFA; border-top:1px solid #F0F0F0;
+    font-style:italic;
+  }
+
+
+  /* scroll hint */
+  .snk-scroll-hint {
+    text-align:center;
+    font-size:10px;
+    color:#94A3B8;
+    padding:3px 8px;
+    background:#F8FAFC;
+    border-top:1px solid #E5E7EB;
+    letter-spacing:.3px;
+  }
+  /* snk-page scrollable */
+  .snk-page { overflow:hidden; }
 
 </style>
 </head>
@@ -1518,7 +1556,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <div class="snk-tb-count">24</div>
         </div>
         <div class="snk-grid-wrap">
-          <table class="snk-tbl">
+          <table class="snk-tbl" style="min-width:1100px">
             <thead>
               <tr>
                 <th>Dt. Movimento</th>
@@ -1572,6 +1610,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           </table>
         </div>
         <!-- Itens subgrid -->
+        <div class="snk-scroll-hint">← deslize para ver todas as colunas →</div>
         <div class="snk-items-bar">Itens</div>
         <div class="snk-grid-wrap" style="max-height:80px;overflow:hidden">
           <table class="snk-tbl">
@@ -1664,7 +1703,7 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         <div class="snk-toolbar-row">
           <div class="snk-tb-btn-icon">⚙</div>
           <div class="snk-tb-sep"></div>
-          <button class="snk-tb-btn" id="btn-print-mapa" onclick="printMapa()" disabled style="color:#1565C0;font-weight:600">🖨 Imprimir Mapa Sep.</button>
+          <button class="snk-tb-btn" id="btn-print-mapa" onclick="openUserModal(selectedSepId)" disabled style="color:#1565C0;font-weight:600">🖨 Imprimir Mapa Sep.</button>
           <button class="snk-tb-btn" id="btn-iniciar" onclick="iniciarSeparacao()" disabled style="color:#92400E;font-weight:600">▶ Iniciar Separação</button>
           <button class="snk-tb-btn" id="btn-finalizar" onclick="finalizarSeparacao()" disabled style="color:#166534;font-weight:600">✔ Finalizar Separação</button>
           <div class="snk-tb-sep"></div>
@@ -1672,23 +1711,29 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
           <div class="snk-tb-count" id="sep-count-display">0 registros</div>
         </div>
         <div class="snk-grid-wrap">
-          <table class="snk-tbl">
+          <table class="snk-tbl" style="min-width:1550px">l">
             <thead>
               <tr>
                 <th style="width:28px"><input type="checkbox" onchange="selectAllSep(this)"/></th>
                 <th style="min-width:70px">Nro. NF</th>
-                <th>Nome Parceiro</th>
-                <th>Endereço de Entrega</th>
+                <th style="min-width:160px">Nome Parceiro</th>
+                <th style="min-width:180px">Endereço de Entrega</th>
                 <th>Vendedor</th>
                 <th style="text-align:center">Itens</th>
                 <th style="min-width:110px">Tipo de Venda</th>
-                <th class="snk-col-highlight-green">Status</th>
+                <th style="min-width:140px">Nome Separador</th>
+                <th style="min-width:140px">Nome Conferente</th>
+                <th style="min-width:130px">Dt. Início Sep.</th>
+                <th style="min-width:130px">Dt. Final Tarefa</th>
+                <th class="snk-col-highlight-green" style="min-width:130px">Status</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody id="sep-tbody"></tbody>
           </table>
         </div>
+        <div class="snk-scroll-hint">← → Role horizontalmente para ver Dt. Início Sep. · Dt. Final Tarefa · Status</div>
+        <div class="snk-scroll-hint">← deslize para ver todas as colunas: Separador · Conferente · Dt. Início Sep. · Dt. Final Tarefa · Status →</div>
         <div class="snk-action-bar" id="sep-action-bar">
           <span class="snk-action-title" id="sep-hint">Selecione um pedido</span>
         </div>
@@ -1698,6 +1743,52 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
 
   <div class="screenshot-caption" style="margin-top:-1rem;margin-bottom:2rem">
     <strong>💡 Interativo:</strong> Selecione uma linha → habilita os botões na toolbar. <strong>Imprimir Mapa Sep.</strong> abre o mapa de separação. <strong>Iniciar</strong> muda para Em Separação. <strong>Finalizar</strong> muda para Sep. Finalizada e sincroniza o Portal de Vendas.
+  </div>
+
+  <!-- Modal de autenticação do separador -->
+  <div id="user-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden">
+      <!-- header -->
+      <div style="background:#1A3E6E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="color:#fff;font-size:14px;font-weight:700">👤 Identificação do Operador</div>
+        <button onclick="closeUserModal()" style="background:none;border:none;color:#93C5FD;font-size:18px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <!-- body -->
+      <div style="padding:20px 24px">
+        <p style="font-size:13px;color:#64748B;margin-bottom:16px">
+          Informe seu <strong>código de usuário</strong> (TSIUSU.CODUSU) para registrar esta separação em seu nome.
+        </p>
+        <!-- NF info -->
+        <div id="user-modal-nf" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1D4ED8;font-weight:600"></div>
+        <!-- input -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Código do Usuário (CODUSU)</label>
+          <div style="display:flex;gap:8px">
+            <input id="input-codusu" type="text" placeholder="Ex: ALEXS, CARLOS..."
+              style="flex:1;padding:9px 12px;border:1px solid #D1D5DB;border-radius:6px;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-family:monospace;outline:none"
+              onkeyup="this.value=this.value.toUpperCase();lookupUser(this.value)"
+              onkeydown="if(event.key==='Enter')confirmUserAndPrint()"/>
+            <button onclick="lookupUser(document.getElementById('input-codusu').value)"
+              style="padding:9px 14px;background:#1A3E6E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🔍</button>
+          </div>
+        </div>
+        <!-- resultado lookup -->
+        <div id="user-lookup-result" style="min-height:42px;margin-bottom:16px"></div>
+        <!-- hint tabela -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:8px 12px;font-size:11px;color:#64748B;margin-bottom:16px">
+          <strong style="color:#374151">TSIUSU</strong> — tabela de usuários Sankhya OM<br>
+          <span style="font-family:monospace">CODUSU</span> = código de login &nbsp;·&nbsp; <span style="font-family:monospace">NOMEUSU</span> = nome completo
+        </div>
+        <!-- botões -->
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="closeUserModal()" style="padding:8px 18px;border:1px solid #D1D5DB;border-radius:6px;cursor:pointer;font-size:13px;background:#fff">Cancelar</button>
+          <button id="btn-confirm-print" onclick="confirmUserAndPrint()" disabled
+            style="padding:8px 18px;background:#1A3E6E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;opacity:.5">
+            ✔ Confirmar e Imprimir
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- MAPA DE SEPARAÇÃO MODAL -->
@@ -1711,8 +1802,9 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         <div style="text-align:right">
           <div style="font-size:22px;font-weight:900;color:#1A3E6E;margin-bottom:4px">NF <span id="mapa-nf">—</span></div>
           <div class="mapa-field">Data: <strong id="mapa-data">—</strong></div>
-          <div class="mapa-field">Separador: <strong>_______________________</strong></div>
-          <div class="mapa-field">Conferente: <strong>_______________________</strong></div>
+          <div class="mapa-field">Separador: <strong id="mapa-separador-nome">_______________________</strong></div>
+          <div class="mapa-field" style="font-size:10px;color:#64748B">Registrado em: <span id="mapa-separador-dt">—</span></div>
+          <div class="mapa-field">Conferente: <strong id="mapa-conferente-nome">_______________________</strong></div>
         </div>
       </div>
       <div class="mapa-info-row" style="grid-template-columns:repeat(2,1fr)">
@@ -2778,7 +2870,15 @@ function renderSepTable() {
     const isSel = selectedSepId===p.id;
     const tipoBg = p.tipo==='Venda Balcão'?'#DBEAFE':'#FEF3C7';
     const tipoC  = p.tipo==='Venda Balcão'?'#1D4ED8':'#92400E';
-    const endTxt = (p.end||'—').substring(0,35)+(p.end&&p.end.length>35?'…':'');
+    const endTxt  = (p.end||'—').substring(0,28)+(p.end&&p.end.length>28?'…':'');
+    const dtIni   = p.dt_inicio_sep  ? '<span style="font-size:10px;color:#166534;white-space:nowrap">'+p.dt_inicio_sep+'</span>'  : '<span style="color:#CBD5E1;font-size:10px">—</span>';
+    const dtFim   = p.dt_fim_tarefa  ? '<span style="font-size:10px;color:#DC2626;white-space:nowrap">'+p.dt_fim_tarefa+'</span>'  : '<span style="color:#CBD5E1;font-size:10px">—</span>';
+    const sepNome = p.separador_nomeusu
+      ? '<span style="font-size:10px;font-weight:600;color:#1A3E6E">'+p.separador_nomeusu+'</span><br><span style="font-size:9px;color:#94A3B8;font-family:monospace">'+p.separador_codusu+'</span>'
+      : '<span style="color:#CBD5E1;font-size:10px">—</span>';
+    const confNome = p.conferente_nomeusu
+      ? '<span style="font-size:10px;font-weight:600;color:#7C3AED">'+p.conferente_nomeusu+'</span><br><span style="font-size:9px;color:#94A3B8;font-family:monospace">'+p.conferente_codusu+'</span>'
+      : '<span style="color:#CBD5E1;font-size:10px">—</span>';
     return '<tr data-pid="'+p.id+'" onclick="selectSepRow('+p.id+')" id="sep-row-'+p.id+'" class="'+(isSel?'snk-row-sel':'')+'">'
       +'<td><input type="checkbox" '+(isSel?'checked':'')+' onclick="event.stopPropagation();selectSepRow('+p.id+')"/></td>'
       +'<td><strong style="color:#1D4ED8">NF '+p.nf+'</strong></td>'
@@ -2787,6 +2887,10 @@ function renderSepTable() {
       +'<td>'+p.vend+'</td>'
       +'<td style="text-align:center">'+p.itens+'</td>'
       +'<td><span style="font-size:10px;padding:1px 8px;border-radius:10px;background:'+tipoBg+';color:'+tipoC+'">'+p.tipo+'</span></td>'
+      +'<td>'+sepNome+'</td>'
+      +'<td>'+confNome+'</td>'
+      +'<td>'+dtIni+'</td>'
+      +'<td>'+dtFim+'</td>'
       +'<td><span class="snk-status-pill '+statusCls[p.status]+'">'+statusLabels[p.status]+'</span></td>'
       +'<td><button class="snk-row-btn2" onclick="event.stopPropagation();openMapaFor('+p.id+')">🖨 Mapa</button></td>'
       +'</tr>';
@@ -2825,15 +2929,22 @@ function updateSepButtons() {
   const bar = document.getElementById('sep-action-bar');
   if (bar) bar.classList.toggle('visible', !!p);
 }
+function fmtDT(d) {
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
 function iniciarSeparacao() {
   const p=pedidos.find(x=>x.id===selectedSepId);
   if(!p||p.status!=='lib') return;
-  p.status='sep'; renderSepTable(); syncPortalStatus(p.nf,'sep');
+  p.status='sep';
+  p.dt_inicio_sep = fmtDT(new Date());
+  renderSepTable(); syncPortalStatus(p.nf,'sep');
 }
 function finalizarSeparacao() {
   const p=pedidos.find(x=>x.id===selectedSepId);
   if(!p||p.status!=='sep') return;
-  p.status='fin'; renderSepTable(); syncPortalStatus(p.nf,'fin');
+  p.status='fin';
+  p.dt_fim_tarefa = fmtDT(new Date());
+  renderSepTable(); syncPortalStatus(p.nf,'fin');
 }
 function syncPortalStatus(nf,st) {
   document.querySelectorAll('#portal-tbody tr').forEach(tr => {
@@ -2845,7 +2956,8 @@ function syncPortalStatus(nf,st) {
 }
 function openMapaFor(id) {
   const p=pedidos.find(x=>x.id===id); if(!p) return;
-  selectedSepId=id; renderSepTable(); printMapa();
+  selectedSepId=id; renderSepTable();
+  openUserModal(id);
 }
 function printMapa() {
   const p=pedidos.find(x=>x.id===selectedSepId); if(!p) return;
@@ -2853,6 +2965,27 @@ function printMapa() {
   set('mapa-nf',p.nf); set('mapa-data',new Date().toLocaleDateString('pt-BR'));
   set('mapa-parceiro',p.parc); set('mapa-vendedor',p.vend);
   set('mapa-tipo',p.tipo); set('mapa-endereco',p.end||'—'); set('mapa-ts',new Date().toLocaleString('pt-BR'));
+  // Separador registrado via TSIUSU
+  // Conferente
+  const confEl = document.getElementById('mapa-conferente-nome');
+  if (confEl) {
+    confEl.textContent = p.conferente_nomeusu
+      ? p.conferente_nomeusu + ' (' + p.conferente_codusu + ')'
+      : '_______________________';
+    confEl.style.color = p.conferente_nomeusu ? '#7C3AED' : '#374151';
+  }
+  const sepEl = document.getElementById('mapa-separador-nome');
+  if (sepEl) {
+    if (p.separador_nomeusu) {
+      sepEl.textContent = p.separador_nomeusu + ' (' + p.separador_codusu + ')';
+      sepEl.style.color = '#166534';
+    } else {
+      sepEl.textContent = '_______________________';
+      sepEl.style.color = '#374151';
+    }
+  }
+  const sepDtEl = document.getElementById('mapa-separador-dt');
+  if (sepDtEl) sepDtEl.textContent = p.separador_reg_dt || '—';
   const mb=document.getElementById('mapa-tbody');
   if(mb) mb.innerHTML=mapaItems.slice(0,Math.min(p.itens,mapaItems.length)).map((item,i)=>
     '<tr><td class="qtd-col">'+(i+1)+'</td><td>'+item.cod+'</td><td>'+item.desc+'</td>'
@@ -2939,6 +3072,128 @@ function renderMatriz() {
   });
   html2 += '</div>';
   container.innerHTML = html2;
+}
+
+
+// ─── TSIUSU mock — tabela de usuários Sankhya ───
+const TSIUSU = {
+  'ALEXS':  'Alexsandro C. Lopes',
+  'CARLOS': 'Carlos M. Silva',
+  'JOAO':   'João S. Pereira',
+  'ANA':    'Ana P. Costa',
+  'PEDRO':  'Pedro R. Santos',
+  'MARCOS': 'Marcos L. Oliveira',
+  'SANDRA': 'Sandra T. Alves',
+  'LUCAS':  'Lucas M. Ferreira',
+};
+
+let _userModalPedidoId = null;
+let _confirmedUser     = null;
+
+function openUserModal(pedidoId) {
+  const p = pedidos.find(x => x.id === pedidoId);
+  if (!p) return;
+  _userModalPedidoId = pedidoId;
+  _confirmedUser     = null;
+
+  const nfEl = document.getElementById('user-modal-nf');
+  if (nfEl) nfEl.innerHTML =
+    '📋 NF <strong>' + p.nf + '</strong> &nbsp;·&nbsp; ' + p.parc +
+    ' &nbsp;·&nbsp; <span style="font-size:11px;padding:1px 8px;border-radius:10px;background:' +
+    (p.tipo==='Venda Balcão'?'#DBEAFE':'#FEF3C7') + ';color:' +
+    (p.tipo==='Venda Balcão'?'#1D4ED8':'#92400E') + '">' + p.tipo + '</span>';
+
+  const inp = document.getElementById('input-codusu');
+  if (inp) { inp.value = ''; inp.focus(); }
+
+  const res = document.getElementById('user-lookup-result');
+  if (res) res.innerHTML = '';
+
+  const btn = document.getElementById('btn-confirm-print');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const modal = document.getElementById('user-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeUserModal() {
+  const modal = document.getElementById('user-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function lookupUser(codusu) {
+  const res = document.getElementById('user-lookup-result');
+  const btn = document.getElementById('btn-confirm-print');
+  if (!res || !btn) return;
+
+  const code = (codusu || '').trim().toUpperCase();
+  if (!code || code.length < 2) {
+    res.innerHTML = '';
+    btn.disabled = true; btn.style.opacity = '.5';
+    _confirmedUser = null;
+    return;
+  }
+
+  const nome = TSIUSU[code];
+  if (nome) {
+    res.innerHTML =
+      '<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:20px">👤</span>'
+      + '<div>'
+        + '<div style="font-size:10px;color:#166534;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Usuário encontrado — TSIUSU.NOMEUSU</div>'
+        + '<div style="font-size:15px;font-weight:700;color:#1A3E6E">' + nome + '</div>'
+        + '<div style="font-size:10px;color:#64748B;font-family:monospace">CODUSU: ' + code + '</div>'
+      + '</div></div>';
+    btn.disabled = false; btn.style.opacity = '1';
+    _confirmedUser = { codusu: code, nomeusu: nome };
+  } else {
+    res.innerHTML =
+      '<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;color:#DC2626;font-size:13px">'
+      + '⚠ Código <strong>' + code + '</strong> não encontrado em TSIUSU. Verifique e tente novamente.'
+      + '</div>';
+    btn.disabled = true; btn.style.opacity = '.5';
+    _confirmedUser = null;
+  }
+}
+
+let _currentRole = 'sep'; // 'sep' or 'conf'
+
+function setRole(role) {
+  _currentRole = role;
+  const btnSep  = document.getElementById('btn-role-sep');
+  const btnConf = document.getElementById('btn-role-conf');
+  if (btnSep && btnConf) {
+    if (role === 'sep') {
+      btnSep.style.background  = '#1A3E6E'; btnSep.style.color  = '#fff'; btnSep.style.borderColor  = '#1A3E6E';
+      btnConf.style.background = '#fff';    btnConf.style.color = '#7C3AED'; btnConf.style.borderColor = '#7C3AED';
+    } else {
+      btnConf.style.background = '#7C3AED'; btnConf.style.color = '#fff'; btnConf.style.borderColor = '#7C3AED';
+      btnSep.style.background  = '#fff';    btnSep.style.color  = '#1A3E6E'; btnSep.style.borderColor  = '#1A3E6E';
+    }
+  }
+  // re-check lookup
+  const inp = document.getElementById('input-codusu');
+  if (inp && inp.value) lookupUser(inp.value);
+}
+
+function confirmUserAndPrint() {
+  if (!_confirmedUser || !_userModalPedidoId) return;
+  const p = pedidos.find(x => x.id === _userModalPedidoId);
+  if (p) {
+    if (_currentRole === 'sep') {
+      p.separador_codusu  = _confirmedUser.codusu;
+      p.separador_nomeusu = _confirmedUser.nomeusu;
+      p.separador_reg_dt  = fmtDT(new Date());
+    } else {
+      p.conferente_codusu  = _confirmedUser.codusu;
+      p.conferente_nomeusu = _confirmedUser.nomeusu;
+      p.conferente_reg_dt  = fmtDT(new Date());
+    }
+    renderSepTable();
+  }
+  closeUserModal();
+  selectedSepId = _userModalPedidoId;
+  printMapa();
 }
 
 document.addEventListener('DOMContentLoaded', () => { renderSepTable(); });
