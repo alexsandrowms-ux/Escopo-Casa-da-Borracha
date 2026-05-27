@@ -1776,8 +1776,8 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
         <div id="user-lookup-result" style="min-height:42px;margin-bottom:16px"></div>
         <!-- hint tabela -->
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:8px 12px;font-size:11px;color:#64748B;margin-bottom:16px">
-          <strong style="color:#374151">TSIUSU</strong> — tabela de usuários Sankhya OM<br>
-          <span style="font-family:monospace">CODUSU</span> = código de login &nbsp;·&nbsp; <span style="font-family:monospace">NOMEUSU</span> = nome completo
+          <strong style="color:#374151">TSIUSU</strong> — tabela de usuários Sankhya OM &nbsp;·&nbsp; <span style="color:#92400E">Modo protótipo: qualquer código é aceito</span><br>
+          <span style="font-family:monospace">CODUSU</span> = código de login &nbsp;·&nbsp; <span style="font-family:monospace">NOMEUSU</span> = nome completo &nbsp;·&nbsp; Sugestões: <span style="font-family:monospace;color:#1A3E6E">ALEXS · CARLOS · JOAO · ANA</span>
         </div>
         <!-- botões -->
         <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -3127,7 +3127,7 @@ function lookupUser(codusu) {
   if (!res || !btn) return;
 
   const code = (codusu || '').trim().toUpperCase();
-  if (!code || code.length < 2) {
+  if (!code || code.length < 1) {
     res.innerHTML = '';
     btn.disabled = true; btn.style.opacity = '.5';
     _confirmedUser = null;
@@ -3136,6 +3136,7 @@ function lookupUser(codusu) {
 
   const nome = TSIUSU[code];
   if (nome) {
+    // Usuário encontrado no mock
     res.innerHTML =
       '<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">'
       + '<span style="font-size:20px">👤</span>'
@@ -3144,16 +3145,21 @@ function lookupUser(codusu) {
         + '<div style="font-size:15px;font-weight:700;color:#1A3E6E">' + nome + '</div>'
         + '<div style="font-size:10px;color:#64748B;font-family:monospace">CODUSU: ' + code + '</div>'
       + '</div></div>';
-    btn.disabled = false; btn.style.opacity = '1';
     _confirmedUser = { codusu: code, nomeusu: nome };
   } else {
+    // Não encontrado no mock — aceita mesmo assim (modo protótipo)
     res.innerHTML =
-      '<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;color:#DC2626;font-size:13px">'
-      + '⚠ Código <strong>' + code + '</strong> não encontrado em TSIUSU. Verifique e tente novamente.'
+      '<div style="background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#92400E">'
+      + '<strong>Obs.:</strong> Código <strong>' + code + '</strong> não está no mock de usuários deste protótipo. '
+      + 'Em produção, a validação ocorre contra <span style="font-family:monospace">TSIUSU.CODUSU</span> no Sankhya OM.'
+      + '</div>'
+      + '<div style="margin-top:6px;padding:6px 10px;font-size:11px;color:#64748B">'
+      + '👤 Será registrado como: <strong style="color:#1A3E6E">' + code + '</strong>'
       + '</div>';
-    btn.disabled = true; btn.style.opacity = '.5';
-    _confirmedUser = null;
+    _confirmedUser = { codusu: code, nomeusu: code };
   }
+  // Habilita sempre que tiver código
+  btn.disabled = false; btn.style.opacity = '1';
 }
 
 let _currentRole = 'sep'; // 'sep' or 'conf'
