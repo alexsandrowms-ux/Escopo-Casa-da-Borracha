@@ -499,12 +499,17 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   .ps-footer { text-align:center; font-size:10px; color:#94A3B8; margin-top:40px; padding-top:12px; border-top:1px solid #E2E8F0; }
 
   @media print {
-    body > *:not(#print-scope) { display:none !important; }
+    /* Ocultar toda a interface */
+    header, nav, main, #export-modal, #user-modal,
+    #cancel-modal, #reinicio-modal, #mapa-modal { display:none !important; }
+    /* Mostrar apenas o escopo */
     #print-scope { display:block !important; }
     .ps-page { padding:20px; max-width:100%; }
     .ps-section-break { page-break-before:always; height:0; }
-    @page { margin:15mm 15mm 20mm; }
+    @page { size:A4; margin:15mm 15mm 20mm; }
     .ps-cover { page-break-after:always; }
+    /* Remover sombras e bordas de tela */
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
 
 
@@ -2599,6 +2604,9 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   </div>
 </div>
 
+
+</main>
+
 <!-- ══ PRINT VIEW — layout de escopo para PDF ══ -->
 <div id="print-scope" style="display:none">
   <div class="ps-page">
@@ -2677,7 +2685,6 @@ body{font-family:var(--font);color:var(--text);background:#F1F5F9;font-size:14px
   </div>
 </div>
 
-</main>
 
 <script>
 // ─── STATUS INFO ───
@@ -4037,13 +4044,463 @@ function montarPrintView() {
 
 function exportarPDF() {
   fecharExport();
-  montarPrintView();
-  document.getElementById('print-scope').style.display = 'block';
-  setTimeout(() => {
-    window.print();
-    document.getElementById('print-scope').style.display = 'none';
-  }, 300);
+  if (!horasData) loadData();
+
+  // ── Dados base ──
+  const empresa   = document.getElementById('capa-company')?.textContent?.trim()  || 'Casa da Borracha';
+  const dataDoc   = document.getElementById('capa-data')?.textContent?.trim()      || new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const versao    = document.getElementById('capa-versao')?.textContent?.trim()    || '0.2';
+  const selEsc    = document.getElementById('capa-status-escopo');
+  const selProj   = document.getElementById('capa-status-projeto');
+  const stEsc     = selEsc  ? selEsc.options[selEsc.selectedIndex].text   : 'Em Análise';
+  const stProj    = selProj ? selProj.options[selProj.selectedIndex].text : 'Pendente';
+  const grand     = horasData.modulos.reduce((s,m)=>s+m.rows.reduce((ss,r)=>ss+(Number(r.horas)||0),0),0);
+  const allRows   = horasData.modulos.flatMap(m=>m.rows.map(r=>({...r,modTitle:m.title,modColor:m.color})));
+  const okCt      = allRows.filter(r=>r.ok).length;
+  const pct       = allRows.length ? Math.round(okCt/allRows.length*100) : 0;
+  const today     = new Date().toLocaleDateString('pt-BR');
+
+  // ── Módulo 1 e 2 subtotais ──
+  const sub0 = horasData.modulos[0]?.rows.reduce((s,r)=>s+(Number(r.horas)||0),0)||0;
+  const sub1 = horasData.modulos[1]?.rows.reduce((s,r)=>s+(Number(r.horas)||0),0)||0;
+
+  // ── GANTT SVG ──
+  function buildGantt() {
+    const withDates = allRows.filter(r=>r.dt_ini&&r.dt_fim);
+    if (!withDates.length) return '<p style="color:#94A3B8;font-style:italic">Nenhuma atividade com datas definidas.</p>';
+
+    const dates  = withDates.flatMap(r=>[new Date(r.dt_ini),new Date(r.dt_fim)]);
+    let   minD   = new Date(Math.min(...dates));
+    let   maxD   = new Date(Math.max(...dates));
+    minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
+    maxD = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0);
+    const totalMs = maxD - minD;
+    const pct2  = d => Math.max(0, Math.min(100, (new Date(d)-minD)/totalMs*100));
+    const pctW  = (s,e)=> Math.max(0.5, (new Date(e)-new Date(s))/totalMs*100);
+
+    const months = [];
+    let cur = new Date(minD);
+    while (cur <= maxD) {
+      const nm = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+      const start = pct2(cur);
+      const end   = pct2(nm > maxD ? maxD : nm);
+      months.push({l: cur.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), start, w: end-start});
+      cur = nm;
+    }
+
+    const LABEL = 200;
+    const ROW_H = 28;
+    const H     = withDates.length * ROW_H + 60;
+    const RESP_C = {'Consultor':'#2563EB','TI-Cliente':'#16A34A','TI+Consultoria':'#7C3AED','Diretoria Cliente':'#DC2626'};
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 ${H}" style="width:100%;font-family:-apple-system,sans-serif">`;
+
+    // Month headers
+    svg += `<rect x="0" y="0" width="900" height="24" fill="#1A3E6E"/>`;
+    svg += `<rect x="0" y="0" width="${LABEL}" height="24" fill="#0F2A4A"/>`;
+    svg += `<text x="${LABEL/2}" y="16" text-anchor="middle" font-size="10" fill="#93C5FD" font-weight="700">ATIVIDADE</text>`;
+    months.forEach(m => {
+      const x = LABEL + m.start/100*(900-LABEL);
+      const w = m.w/100*(900-LABEL);
+      svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#E2E8F0" stroke-width="0.5"/>`;
+      svg += `<text x="${x+w/2}" y="16" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">${m.l}</text>`;
+    });
+
+    // Rows
+    let lastMod = '';
+    withDates.forEach((row, ri) => {
+      const y = 28 + ri*ROW_H;
+      if (row.modTitle !== lastMod) {
+        lastMod = row.modTitle;
+        svg += `<rect x="0" y="${y}" width="900" height="${ROW_H}" fill="#F1F5F9"/>`;
+        svg += `<text x="8" y="${y+18}" font-size="10" font-weight="700" fill="${row.modColor}">${escH(row.modTitle.split('—')[0].trim())}</text>`;
+        return;
+      }
+      const bg = ri%2===0 ? '#fff' : '#FAFAFA';
+      svg += `<rect x="0" y="${y}" width="900" height="${ROW_H}" fill="${bg}"/>`;
+      svg += `<line x1="0" y1="${y+ROW_H}" x2="900" y2="${y+ROW_H}" stroke="#F0F0F0" stroke-width="0.5"/>`;
+
+      // Label (truncate)
+      const label = row.ativ.length > 32 ? row.ativ.substring(0,30)+'…' : row.ativ;
+      svg += `<text x="8" y="${y+18}" font-size="10" fill="${row.ok?'#94A3B8':'#1E293B'}" ${row.ok?'text-decoration="line-through"':''}>${escH(label)}</text>`;
+
+      // Bar
+      const barX = LABEL + pct2(row.dt_ini)/100*(900-LABEL);
+      const barW = pctW(row.dt_ini,row.dt_fim)/100*(900-LABEL);
+      const c    = RESP_C[row.resp]||'#2563EB';
+      svg += `<rect x="${barX}" y="${y+5}" width="${Math.max(barW,4)}" height="${ROW_H-10}" rx="3" fill="${c}" opacity="${row.ok?'0.5':'0.8'}"/>`;
+      if (barW > 30) svg += `<text x="${barX+barW/2}" y="${y+16}" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">${row.horas}h</text>`;
+
+      // Today line
+      const todayPct = pct2(new Date());
+      if (todayPct > 0 && todayPct < 100) {
+        const todayX = LABEL + todayPct/100*(900-LABEL);
+        if (ri===0) svg += `<line x1="${todayX}" y1="24" x2="${todayX}" y2="${H}" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>`;
+      }
+    });
+
+    // Legend
+    svg += `<rect x="0" y="${H-22}" width="900" height="22" fill="#F8FAFC"/>`;
+    let lx = 8;
+    Object.entries(RESP_C).forEach(([k,v]) => {
+      svg += `<rect x="${lx}" y="${H-15}" width="10" height="10" rx="2" fill="${v}"/>`;
+      svg += `<text x="${lx+14}" y="${H-6}" font-size="9" fill="#374151">${k}</text>`;
+      lx += k.length*5.5 + 24;
+    });
+    svg += `<line x1="${lx}" y1="${H-10}" x2="${lx+20}" y2="${H-10}" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2"/>`;
+    svg += `<text x="${lx+24}" y="${H-6}" font-size="9" fill="#374151">Hoje</text>`;
+    svg += '</svg>';
+    return svg;
+  }
+
+  // ── Tabela de horas ──
+  function buildHorasTable() {
+    let h = '';
+    let seq = 1;
+    horasData.modulos.forEach(mod => {
+      const sub = mod.rows.reduce((s,r)=>s+(Number(r.horas)||0),0);
+      h += `<div style="margin-bottom:4px">
+        <div style="background:${mod.color};color:#fff;padding:8px 12px;font-size:12px;font-weight:700;border-radius:4px 4px 0 0">
+          ${escH(mod.title)} — ${sub}h
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #E2E8F0;border-top:none">
+        <thead><tr style="background:#F1F5F9">
+          <th style="padding:6px 8px;text-align:center;width:28px;border:1px solid #E2E8F0">#</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #E2E8F0">Atividade / Entregável</th>
+          <th style="padding:6px 8px;text-align:left;width:115px;border:1px solid #E2E8F0">Responsável</th>
+          <th style="padding:6px 8px;text-align:center;width:65px;border:1px solid #E2E8F0">Prioridade</th>
+          <th style="padding:6px 8px;text-align:center;width:75px;border:1px solid #E2E8F0">Dt. Início</th>
+          <th style="padding:6px 8px;text-align:center;width:75px;border:1px solid #E2E8F0">Dt. Fim</th>
+          <th style="padding:6px 8px;text-align:right;width:45px;border:1px solid #E2E8F0">Horas</th>
+          <th style="padding:6px 8px;text-align:center;width:45px;border:1px solid #E2E8F0">OK</th>
+        </tr></thead><tbody>`;
+      mod.rows.forEach((r,i) => {
+        const bg  = i%2===0?'#fff':'#FAFAFA';
+        const pBg = r.prio==='Alta'?'#FEE2E2':r.prio==='Média'?'#FEF3C7':'#DCFCE7';
+        const pC  = r.prio==='Alta'?'#991B1B':r.prio==='Média'?'#92400E':'#166534';
+        const dI  = r.dt_ini?r.dt_ini.split('-').reverse().join('/'):'—';
+        const dF  = r.dt_fim?r.dt_fim.split('-').reverse().join('/'):'—';
+        h += `<tr style="background:${bg}">
+          <td style="padding:5px 8px;text-align:center;color:#94A3B8;border:1px solid #F0F0F0">${seq++}</td>
+          <td style="padding:5px 8px;border:1px solid #F0F0F0">${escH(r.ativ)}</td>
+          <td style="padding:5px 8px;border:1px solid #F0F0F0">${escH(r.resp)}</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">
+            <span style="background:${pBg};color:${pC};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">${r.prio}</span>
+          </td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${dI}</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${dF}</td>
+          <td style="padding:5px 8px;text-align:right;font-weight:700;color:#2563EB;border:1px solid #F0F0F0">${r.horas}h</td>
+          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${r.ok
+            ?'<span style="color:#16A34A;font-weight:700">✓</span>'
+            :'<span style="color:#D1D5DB">○</span>'}</td>
+        </tr>`;
+      });
+      h += `<tr style="background:#EFF6FF">
+        <td colspan="6" style="padding:6px 8px;text-align:right;font-weight:700;color:#1A3E6E;border:1px solid #E2E8F0">Subtotal ${escH(mod.title.split('—')[0].trim())}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:800;color:#EA580C;border:1px solid #E2E8F0">${sub}h</td>
+        <td style="border:1px solid #E2E8F0"></td>
+      </tr>`;
+      h += '</tbody></table></div>';
+    });
+    return h;
+  }
+
+  // ── Tabela de aceite ──
+  function buildAceiteTable() {
+    let h = '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1A3E6E;color:#fff">'
+      + '<th style="padding:7px 10px;width:28px">#</th>'
+      + '<th style="padding:7px 10px;text-align:left">Atividade / Entregável</th>'
+      + '<th style="padding:7px 10px;width:110px;text-align:left">Módulo</th>'
+      + '<th style="padding:7px 10px;width:90px;text-align:center">OK Cliente</th>'
+      + '</tr></thead><tbody>';
+    let seq = 1;
+    horasData.modulos.forEach(mod => {
+      mod.rows.forEach((r,i) => {
+        const bg = seq%2===0?'#F8FAFC':'#fff';
+        h += `<tr style="background:${bg}">
+          <td style="padding:5px 10px;text-align:center;color:#94A3B8;border-bottom:1px solid #E2E8F0">${seq++}</td>
+          <td style="padding:5px 10px;border-bottom:1px solid #E2E8F0">${escH(r.ativ)}</td>
+          <td style="padding:5px 10px;font-size:10px;color:${mod.color};border-bottom:1px solid #E2E8F0">${escH(mod.title.split('—')[0].trim())}</td>
+          <td style="padding:5px 10px;text-align:center;border-bottom:1px solid #E2E8F0">${r.ok
+            ?'<span style="background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700">✓ Aprovado</span>'
+            :'<span style="background:#F1F5F9;color:#94A3B8;padding:2px 10px;border-radius:10px;font-size:10px">○ Pendente</span>'}</td>
+        </tr>`;
+      });
+    });
+    h += `<tr style="background:#EFF6FF"><td colspan="2" style="padding:7px 10px;font-weight:700;color:#1A3E6E;text-align:right">Total aprovado</td>
+      <td style="padding:7px 10px;font-weight:800;color:${pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626'}">${pct}%</td>
+      <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1A3E6E">${okCt}/${allRows.length}</td></tr>`;
+    h += '</tbody></table>';
+    return h;
+  }
+
+  const ganttSVG   = buildGantt();
+  const horasTable = buildHorasTable();
+  const aceiteTable= buildAceiteTable();
+
+  const doc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Escopo de Projeto — ${escH(empresa)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12px;color:#1E293B;background:#fff;line-height:1.5}
+.page{max-width:820px;margin:0 auto;padding:28px 36px}
+/* ── CAPA ── */
+.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:0}
+.cover-top{background:linear-gradient(135deg,#0F2A4A 0%,#1A3E6E 60%,#2563EB 100%);padding:48px 40px 36px;border-radius:0 0 24px 24px;color:#fff}
+.cover-badge{display:inline-block;background:#EA580C;color:#fff;font-size:11px;font-weight:700;padding:5px 16px;border-radius:20px;margin-bottom:20px;letter-spacing:.5px}
+.cover-title{font-size:38px;font-weight:900;margin-bottom:8px}
+.cover-sub{font-size:16px;font-weight:600;color:#93C5FD;margin-bottom:6px}
+.cover-desc{font-size:13px;color:#BFDBFE;margin-bottom:24px}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.cover-meta-item{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 14px}
+.cover-meta-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#93C5FD;margin-bottom:3px}
+.cover-meta-value{font-size:13px;font-weight:600;color:#fff}
+.cover-companies{display:flex;justify-content:space-between;align-items:center;padding:20px 40px;border-bottom:1px solid #E2E8F0}
+.company-block{text-align:center}
+.company-role{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94A3B8;margin-bottom:4px}
+.company-name{font-size:16px;font-weight:800;color:#1A3E6E}
+.company-contact{font-size:11px;color:#64748B;margin-top:2px}
+.cover-x{font-size:24px;color:#CBD5E1;font-weight:300}
+.cover-footer-info{padding:20px 40px}
+.status-row{display:flex;gap:10px;flex-wrap:wrap}
+.status-pill{padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
+.cover-aviso{background:#FFF7ED;border:1px solid #FED7AA;border-radius:6px;padding:10px 16px;font-size:11px;color:#92400E;margin-top:14px}
+/* ── SUMÁRIO ── */
+.toc-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted #E2E8F0;font-size:12px}
+.toc-num{color:#2563EB;font-weight:700;margin-right:10px}
+/* ── SEÇÕES ── */
+.section{margin-top:0;padding-top:28px}
+.section-num{font-size:11px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.section-title{font-size:18px;font-weight:800;color:#1A3E6E;border-bottom:2px solid #1A3E6E;padding-bottom:8px;margin-bottom:14px}
+.section-text{font-size:12px;color:#374151;line-height:1.7;margin-bottom:12px}
+.objetivo-box{background:#EFF6FF;border-left:4px solid #2563EB;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:14px}
+.objetivo-box h4{font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:4px}
+.objetivo-box p{font-size:12px;color:#374151}
+.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.scope-item{display:flex;gap:10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px}
+.scope-num2{font-size:20px;font-weight:900;flex-shrink:0;line-height:1.1}
+.scope-item strong{display:block;font-size:12px;margin-bottom:2px}
+.scope-item span{font-size:11px;color:#64748B}
+.fora-list{list-style:none;padding:0}
+.fora-list li{padding:6px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;display:flex;gap:8px}
+.fora-list li:before{content:"✕";color:#DC2626;font-weight:700;flex-shrink:0}
+.premissas-list{list-style:none;padding:0}
+.premissas-list li{padding:6px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;display:flex;gap:8px}
+.premissas-list li:before{content:"✔";color:#16A34A;font-weight:700;flex-shrink:0}
+.riscos table{width:100%;border-collapse:collapse;font-size:11px}
+.riscos th{background:#374151;color:#fff;padding:7px 10px;text-align:left}
+.riscos td{padding:6px 10px;border-bottom:1px solid #E2E8F0}
+.riscos tr:nth-child(even) td{background:#F8FAFC}
+.sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:20px}
+.sign-line{border-bottom:1px solid #374151;height:50px;margin-bottom:8px}
+.sign-label{font-size:11px;color:#374151;font-weight:600}
+.sign-label span{font-size:10px;color:#64748B;display:block;font-weight:400;margin-top:2px}
+.footer-doc{text-align:center;font-size:10px;color:#94A3B8;margin-top:32px;padding-top:10px;border-top:1px solid #E2E8F0}
+.gantt-wrap{overflow:hidden;border:1px solid #E2E8F0;border-radius:6px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;text-align:center}
+.kpi-val{font-size:22px;font-weight:800;color:#1A3E6E}
+.kpi-lab{font-size:10px;color:#64748B;margin-top:2px}
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:12mm 14mm 16mm}
+  .pb{page-break-before:always}
+  .cover{page-break-after:always}
 }
+</style></head><body>
+<div class="page">
+
+<!-- ════════════ CAPA ════════════ -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-badge">Escopo de Projeto · ${escH(stEsc)}</div>
+    <div class="cover-title">${escH(empresa)}</div>
+    <div class="cover-sub">Revitalização do Processo Logístico</div>
+    <div class="cover-desc">Implantação das rotinas de Recebimento, Expedição e Operação de Separação sobre o ERP Sankhya OM</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><div class="cover-meta-label">Data do Escopo</div><div class="cover-meta-value">${escH(dataDoc)}</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-label">Versão do Documento</div><div class="cover-meta-value">${escH(versao)}</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-label">Sistema</div><div class="cover-meta-value">Sankhya OM</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-label">Total Estimado</div><div class="cover-meta-value" style="color:#FCD34D">${grand}h</div></div>
+    </div>
+  </div>
+
+  <div class="cover-companies">
+    <div class="company-block">
+      <div class="company-role">Empresa Cliente</div>
+      <div class="company-name">${escH(empresa)}</div>
+    </div>
+    <div class="cover-x">×</div>
+    <div class="company-block">
+      <div class="company-role">Empresa de Consultoria</div>
+      <div class="company-name">Panice Tecnologia</div>
+      <div class="company-contact">Consultor responsável: Alexsandro Lopes</div>
+    </div>
+  </div>
+
+  <div class="cover-footer-info">
+    <div class="status-row">
+      <span class="status-pill" style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE">📋 Status Escopo: ${escH(stEsc)}</span>
+      <span class="status-pill" style="background:#F1F5F9;color:#475569;border-color:#CBD5E1">🚀 Status Projeto: ${escH(stProj)}</span>
+      <span class="status-pill" style="background:${pct===100?'#DCFCE7':pct>=50?'#FFF7ED':'#FEF2F2'};color:${pct===100?'#166534':pct>=50?'#92400E':'#DC2626'};border-color:${pct===100?'#86EFAC':pct>=50?'#FED7AA':'#FCA5A5'}">✓ Aceite: ${pct}% (${okCt}/${allRows.length})</span>
+    </div>
+    <div class="cover-aviso">⚠ Documento sujeito a alterações — aprovação formal do cliente necessária para início do desenvolvimento.</div>
+  </div>
+</div>
+
+<!-- ════════════ SUMÁRIO ════════════ -->
+<div class="section pb">
+  <div class="section-num">Índice</div>
+  <div class="section-title">Sumário</div>
+  ${[
+    ['1','Objetivo do Projeto'],
+    ['2','Escopo e Fora do Escopo'],
+    ['3','Premissas e Dependências'],
+    ['4','Estimativa de Horas e Responsabilidades'],
+    ['5','Cronograma'],
+    ['6','Critérios de Aceite'],
+    ['7','Riscos Identificados'],
+    ['8','Aprovação e Assinaturas'],
+  ].map(([n,t])=>`<div class="toc-item"><div><span class="toc-num">${n}.</span>${t}</div><div style="color:#94A3B8">${n === '1'?'2':n==='2'?'3':n==='3'?'3':n==='4'?'4':n==='5'?'5':n==='6'?'6':n==='7'?'7':'8'}</div></div>`).join('')}
+</div>
+
+<!-- ════════════ 1. OBJETIVO ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 1</div>
+  <div class="section-title">Objetivo do Projeto</div>
+  <p class="section-text">Revitalizar e digitalizar o processo logístico da <strong>${escH(empresa)}</strong> por meio da configuração e implantação das rotinas nativas do ERP <strong>Sankhya OM</strong>, eliminando processos manuais, reduzindo divergências no recebimento e expedição, e garantindo rastreabilidade completa das operações logísticas.</p>
+
+  <div class="objetivo-box">
+    <h4>🎯 Problema identificado</h4>
+    <p>Processos de recebimento e expedição realizados manualmente, sem conferência por código de barras, sem visibilidade de situação logística em tempo real e sem rastreabilidade de quem realizou cada operação.</p>
+  </div>
+  <div class="objetivo-box" style="background:#F0FDF4;border-color:#16A34A">
+    <h4 style="color:#166534">✅ Solução proposta</h4>
+    <p>Implantação da conferência cega no recebimento, situação logística com Operação de Separação parametrizada, conferência de saída por código de barras, etiquetas de volume com dados de entrega e identificação digital de operadores via TSIUSU.</p>
+  </div>
+  <div class="objetivo-box" style="background:#FFF7ED;border-color:#EA580C">
+    <h4 style="color:#C2410C">📈 Resultados esperados</h4>
+    <p>Redução de divergências no recebimento, agilidade na expedição, rastreabilidade completa por operador, visibilidade do fluxo logístico em tempo real para gestores e vendedores.</p>
+  </div>
+
+  <div class="kpi-row" style="margin-top:16px">
+    <div class="kpi-card"><div class="kpi-val" style="color:#2563EB">${grand}h</div><div class="kpi-lab">Total estimado</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:#EA580C">${horasData.modulos.length}</div><div class="kpi-lab">Módulos</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:#7C3AED">${allRows.length}</div><div class="kpi-lab">Atividades</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:${pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626'}">${pct}%</div><div class="kpi-lab">Aceite do cliente</div></div>
+  </div>
+</div>
+
+<!-- ════════════ 2. ESCOPO ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 2</div>
+  <div class="section-title">Escopo e Fora do Escopo</div>
+  <p class="section-text" style="font-weight:600;margin-bottom:10px">✅ O que está incluído:</p>
+  <div class="scope-grid">
+    <div class="scope-item"><div class="scope-num2" style="color:#2563EB">01</div><div><strong>Recebimento</strong><span>Conferência cega, fila de conferência, etiquetagem automática na entrada de NF</span></div></div>
+    <div class="scope-item"><div class="scope-num2" style="color:#EA580C">02</div><div><strong>Expedição — Operação de Separação</strong><span>Situação logística, separação com cancelamento/reinício, conferência de saída CB, etiqueta de volume</span></div></div>
+    <div class="scope-item"><div class="scope-num2" style="color:#7C3AED">03</div><div><strong>Etiquetas</strong><span>Etiqueta de produto (CB + QR Code) e etiqueta de volume com NF e endereço de entrega</span></div></div>
+    <div class="scope-item"><div class="scope-num2" style="color:#0891B2">04</div><div><strong>Rastreabilidade de operadores</strong><span>Identificação via TSIUSU (CODUSU/NOMEUSU) para separadores e conferentes</span></div></div>
+  </div>
+  <p class="section-text" style="font-weight:600;margin-top:14px;margin-bottom:8px">❌ Fora do escopo:</p>
+  <ul class="fora-list">
+    <li>WMS (Warehouse Management System) — solução baseada nas rotinas nativas do Sankhya OM</li>
+    <li>Integração com e-commerce — fora do escopo desta revitalização</li>
+    <li>Módulo de inventário / contagem cíclica — poderá ser escopo de projeto futuro</li>
+    <li>Customizações além de parametrização nativa do ERP</li>
+    <li>Hardware (leitores de código de barras, impressoras) — fornecimento pelo cliente</li>
+  </ul>
+</div>
+
+<!-- ════════════ 3. PREMISSAS ════════════ -->
+<div class="section">
+  <div class="section-num">Seção 3</div>
+  <div class="section-title">Premissas e Dependências</div>
+  <p class="section-text">Para o sucesso da implantação, as seguintes premissas devem ser atendidas pelo cliente:</p>
+  <ul class="premissas-list">
+    <li>Acesso ao ambiente Sankhya OM (produção e homologação) fornecido pela equipe de TI do cliente</li>
+    <li>Equipe de TI do cliente disponível para configurações e suporte durante a implantação</li>
+    <li>Hardware de leitores de código de barras e impressoras de etiqueta adquiridos e configurados</li>
+    <li>Cadastro de SKUs higienizado — produtos com código de barras cadastrado antes do go-live</li>
+    <li>Participação de representante da diretoria para validação e aprovação de etapas</li>
+    <li>Disponibilidade da equipe operacional para treinamentos no prazo acordado</li>
+    <li>Ambiente de homologação espelhando o ambiente de produção para testes</li>
+  </ul>
+</div>
+
+<!-- ════════════ 4. HORAS ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 4</div>
+  <div class="section-title">Estimativa de Horas e Responsabilidades</div>
+  ${horasTable}
+  <div style="text-align:right;background:#EFF6FF;border-radius:6px;padding:10px 14px;font-size:15px;font-weight:800;color:#1A3E6E;margin-top:8px">
+    TOTAL DO PROJETO: <span style="color:#EA580C">${grand}h</span>
+  </div>
+</div>
+
+<!-- ════════════ 5. CRONOGRAMA ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 5</div>
+  <div class="section-title">Cronograma</div>
+  <p class="section-text">Distribuição das atividades ao longo do tempo. A linha vermelha tracejada indica a data atual. Barras preenchidas = em andamento, barras claras = concluídas (OK Cliente).</p>
+  <div class="gantt-wrap">${ganttSVG}</div>
+</div>
+
+<!-- ════════════ 6. ACEITE ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 6</div>
+  <div class="section-title">Critérios de Aceite</div>
+  <p class="section-text">O projeto é considerado entregue quando <strong>100%</strong> das atividades abaixo tiverem aprovação formal do cliente.</p>
+  ${aceiteTable}
+</div>
+
+<!-- ════════════ 7. RISCOS ════════════ -->
+<div class="section">
+  <div class="section-num">Seção 7</div>
+  <div class="section-title">Riscos Identificados</div>
+  <div class="riscos">
+  <table>
+    <thead><tr><th style="width:28px">#</th><th>Risco</th><th style="width:80px;text-align:center">Probabilidade</th><th style="width:80px;text-align:center">Impacto</th><th>Mitigação</th></tr></thead>
+    <tbody>
+      <tr><td style="text-align:center">1</td><td>SKUs sem código de barras em volume acima do estimado</td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alta</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Levantamento prévio e plano de higienização com TI-Cliente</td></tr>
+      <tr><td style="text-align:center">2</td><td>Indisponibilidade de hardware (leitores/impressoras) no prazo</td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Média</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Confirmar aquisição e instalação antes do início do módulo</td></tr>
+      <tr><td style="text-align:center">3</td><td>Resistência da equipe operacional à mudança de processo</td><td style="text-align:center"><span style="background:#DCFCE7;color:#166534;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Médio</span></td><td>Treinamento, acompanhamento pós go-live e suporte próximo</td></tr>
+      <tr><td style="text-align:center">4</td><td>Ambiente Sankhya OM desatualizado ou inconsistente com homologação</td><td style="text-align:center"><span style="background:#DCFCE7;color:#166534;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Validação do ambiente antes do início e alinhamento com Sankhya</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- ════════════ 8. ASSINATURAS ════════════ -->
+<div class="section pb">
+  <div class="section-num">Seção 8</div>
+  <div class="section-title">Aprovação e Assinaturas</div>
+  <p class="section-text">Ao assinar este documento, as partes declaram ter lido, compreendido e concordado com o escopo, premissas, estimativas e critérios de aceite aqui definidos.</p>
+  <div class="sign-grid">
+    <div>
+      <div class="sign-line"></div>
+      <div class="sign-label">Alexsandro Lopes<span>Panice Tecnologia — Consultor Responsável</span><span>Data: ___/___/______</span></div>
+    </div>
+    <div>
+      <div class="sign-line"></div>
+      <div class="sign-label">Responsável — ${escH(empresa)}<span>Cargo: _______________________</span><span>Data: ___/___/______</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-doc">${escH(empresa)} · Revitalização Logística · Panice Tecnologia · Consultor: Alexsandro Lopes · ${today} · Documento Confidencial · Versão ${escH(versao)}</div>
+</div>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=960,height=800');
+  if (!win) { alert('Permita pop-ups para este site para gerar o PDF.'); return; }
+  win.document.write(doc);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 1000);
+}
+
+
 
 // ── Exportar HTML standalone ──
 function exportarHTML() {
