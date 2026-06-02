@@ -3879,48 +3879,415 @@ function confirmarReinicio() {
 
 function abrirExport() {
   if (!horasData) loadData();
-  gerarShareLink();
-  const modal = document.getElementById('export-modal');
-  if (modal) modal.style.display = 'flex';
-}
-function fecharExport() {
-  const modal = document.getElementById('export-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-// ── Link compartilhável ──
-function coletarCapa() {
-  const campos = ['capa-company','capa-titulo','capa-subtitulo','capa-data','capa-versao'];
-  const out = {};
-  campos.forEach(id => { const e = document.getElementById(id); if(e) out[id] = e.textContent || e.innerText || ''; });
-  out.status_escopo  = document.getElementById('capa-status-escopo')  ? document.getElementById('capa-status-escopo').value  : 'analise';
-  out.status_projeto = document.getElementById('capa-status-projeto')  ? document.getElementById('capa-status-projeto').value : 'pendente';
-  return out;
-}
-
-function gerarShareLink() {
+  // Gera o link na hora de abrir o modal
   try {
-    if (!horasData) loadData();
     const payload = { h: horasData, c: coletarCapa(), v: 3 };
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     const url = window.location.href.split('#')[0] + '#escopo=' + encoded;
     const inp = document.getElementById('share-link-input');
     if (inp) inp.value = url;
-  } catch(e) {
-    console.error('Erro ao gerar link:', e);
-  }
+  } catch(e) { console.warn('Share link error:', e); }
+  const modal = document.getElementById('export-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function fecharExport() {
+  const modal = document.getElementById('export-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 function copiarLink() {
   const inp = document.getElementById('share-link-input');
   if (!inp) return;
   inp.select();
-  try { navigator.clipboard.writeText(inp.value); } catch(e) { document.execCommand('copy'); }
+  try { navigator.clipboard.writeText(inp.value).catch(() => document.execCommand('copy')); }
+  catch(e) { document.execCommand('copy'); }
   const fb = document.getElementById('copy-feedback');
   if (fb) { fb.style.display = 'block'; setTimeout(() => fb.style.display = 'none', 2500); }
 }
 
-// ── Carregar dados do link ──
+function coletarCapa() {
+  return {
+    'capa-company':    document.getElementById('capa-company')?.textContent  || '',
+    'capa-data':       document.getElementById('capa-data')?.textContent     || '',
+    'capa-versao':     document.getElementById('capa-versao')?.textContent   || '',
+    status_escopo:     document.getElementById('capa-status-escopo')?.value  || 'analise',
+    status_projeto:    document.getElementById('capa-status-projeto')?.value || 'pendente',
+  };
+}
+
+function gerarDocHTML() {
+  // Gera o HTML limpo do escopo — usado por exportarPDF e exportarHTML
+  if (!horasData) loadData();
+
+  const empresa  = document.getElementById('capa-company')?.textContent?.trim() || 'Casa da Borracha';
+  const dataDoc  = document.getElementById('capa-data')?.textContent?.trim()    || new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const versao   = document.getElementById('capa-versao')?.textContent?.trim()  || '0.2';
+  const selEsc   = document.getElementById('capa-status-escopo');
+  const selProj  = document.getElementById('capa-status-projeto');
+  const stEsc    = selEsc  ? selEsc.options[selEsc.selectedIndex].text  : 'Em Análise';
+  const stProj   = selProj ? selProj.options[selProj.selectedIndex].text: 'Pendente';
+  const grand    = horasData.modulos.reduce((s,m)=>s+m.rows.reduce((ss,r)=>ss+(Number(r.horas)||0),0),0);
+  const allRows  = horasData.modulos.flatMap(m=>m.rows.map(r=>({...r,modTitle:m.title,modColor:m.color})));
+  const okCt     = allRows.filter(r=>r.ok).length;
+  const pct      = allRows.length ? Math.round(okCt/allRows.length*100) : 0;
+  const today    = new Date().toLocaleDateString('pt-BR');
+
+  const RESP_C = {'Consultor':'#2563EB','TI-Cliente':'#16A34A','TI+Consultoria':'#7C3AED','Diretoria Cliente':'#DC2626'};
+  const RESP_L = {'Consultor':'#DBEAFE','TI-Cliente':'#DCFCE7','TI+Consultoria':'#F3E8FF','Diretoria Cliente':'#FEE2E2'};
+
+  // ── Gantt em grade ──
+  function buildGantt() {
+    const withDates = allRows.filter(r=>r.dt_ini&&r.dt_fim);
+    if (!withDates.length) return '<p style="color:#94A3B8;font-style:italic;padding:12px">Sem datas definidas.</p>';
+    const dates = withDates.flatMap(r=>[new Date(r.dt_ini),new Date(r.dt_fim)]);
+    const minD  = new Date(new Date(Math.min(...dates)).getFullYear(), new Date(Math.min(...dates)).getMonth(), 1);
+    const maxD  = new Date(new Date(Math.max(...dates)).getFullYear(), new Date(Math.max(...dates)).getMonth(), 1);
+    const months = [];
+    let cur = new Date(minD);
+    while (cur <= maxD) { months.push(new Date(cur)); cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
+    const todayKey = new Date().getFullYear()+'-'+new Date().getMonth();
+    function isActive(row, m) {
+      if (!row.dt_ini||!row.dt_fim) return false;
+      const s=new Date(row.dt_ini), e=new Date(row.dt_fim);
+      const ms=new Date(m.getFullYear(),m.getMonth(),1), me=new Date(m.getFullYear(),m.getMonth()+1,0);
+      return s<=me && e>=ms;
+    }
+    const mw = Math.max(26, Math.floor(540/months.length));
+    let t = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%">';
+    t += '<thead><tr style="background:#1A3E6E;color:#fff"><th style="padding:7px 10px;text-align:left;min-width:200px;border-right:2px solid #0F2A4A">Atividade / Responsável</th>';
+    months.forEach(m => {
+      const isNow = (m.getFullYear()+'-'+m.getMonth())===todayKey;
+      const lbl   = m.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+      const yr    = String(m.getFullYear()).slice(2);
+      t += '<th style="padding:5px 3px;text-align:center;width:'+mw+'px;font-size:10px;'+(isNow?'background:#EA580C;':'')+'">'
+        + lbl+'<br><span style="font-size:9px;opacity:.8">'+yr+'</span>'+(isNow?'<br><span style="font-size:8px">▼</span>':'')+'</th>';
+    });
+    t += '</tr></thead><tbody>';
+    let lastMod='', seq=1;
+    withDates.forEach((row,ri) => {
+      if (row.modTitle!==lastMod) {
+        lastMod=row.modTitle;
+        t += '<tr style="background:'+row.modColor+'18"><td colspan="'+(months.length+1)+'" style="padding:5px 10px;font-weight:700;font-size:11px;color:'+row.modColor+';border-bottom:1px solid '+row.modColor+'44">'+escH(row.modTitle)+'</td></tr>';
+      }
+      const c=RESP_C[row.resp]||'#2563EB', cl=RESP_L[row.resp]||'#DBEAFE';
+      t += '<tr style="background:'+(ri%2===0?'#fff':'#FAFAFA')+'">'
+        + '<td style="padding:5px 10px;border-bottom:1px solid #F0F0F0;border-right:2px solid #E2E8F0">'
+        + '<div style="font-weight:600;color:#1E293B;font-size:11px">'+(seq++)+'. '+escH(row.ativ)+'</div>'
+        + '<div style="margin-top:2px"><span style="background:'+cl+';color:'+c+';padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">'+escH(row.resp)+'</span>'
+        + ' <span style="font-size:10px;color:#94A3B8">'+row.horas+'h</span>'+(row.ok?' <span style="color:#16A34A;font-weight:700">✓</span>':'')+'</div></td>';
+      months.forEach(m => {
+        const active=isActive(row,m), isNow=(m.getFullYear()+'-'+m.getMonth())===todayKey;
+        t += '<td style="text-align:center;height:32px;border-bottom:1px solid #F0F0F0;border-left:1px solid '+(isNow?'#EA580C':'#F0F0F0')+';'+(isNow?'background:#FFF7ED;':'')+'padding:0">';
+        if (active) t += '<div style="width:100%;height:100%;min-height:32px;background:'+(row.ok?c+'55':c)+';display:flex;align-items:center;justify-content:center">'+(months.filter(mm=>isActive(row,mm)).length<=2?'<span style="font-size:9px;font-weight:700;color:'+(row.ok?c:'#fff')+'">'+row.horas+'h</span>':'')+'</div>';
+        t += '</td>';
+      });
+      t += '</tr>';
+    });
+    // Totais
+    t += '<tr style="background:#F1F5F9;font-weight:700"><td style="padding:6px 10px;font-size:11px;color:#1A3E6E;border-right:2px solid #E2E8F0;border-top:2px solid #E2E8F0">Atividades por mês</td>';
+    months.forEach(m => {
+      const cnt=withDates.filter(r=>isActive(r,m)).length, isNow=(m.getFullYear()+'-'+m.getMonth())===todayKey;
+      t += '<td style="text-align:center;font-size:11px;color:'+(cnt>3?'#DC2626':cnt>1?'#EA580C':'#16A34A')+';border-left:1px solid #E2E8F0;border-top:2px solid #E2E8F0;'+(isNow?'background:#FFF7ED;':'')+'">'+(cnt||'')+'</td>';
+    });
+    t += '</tr></tbody></table></div>';
+    t += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid #E2E8F0;font-size:10px">';
+    Object.entries(RESP_C).forEach(([k,v]) => t += '<div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:10px;background:'+v+';border-radius:2px"></div>'+k+'</div>');
+    t += '<div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:10px;background:#EA580C;border-radius:2px"></div>Mês atual</div>';
+    t += '</div>';
+    return t;
+  }
+
+  // ── Tabela horas ──
+  function buildHoras() {
+    let h=''; let seq=1;
+    horasData.modulos.forEach(mod => {
+      const sub=mod.rows.reduce((s,r)=>s+(Number(r.horas)||0),0);
+      h += '<div style="margin-bottom:6px"><div style="background:'+mod.color+';color:#fff;padding:7px 12px;font-size:12px;font-weight:700;border-radius:4px 4px 0 0">'+escH(mod.title)+' — '+sub+'h</div>'
+        + '<table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #E2E8F0;border-top:none"><thead><tr style="background:#F1F5F9">'
+        + '<th style="padding:6px 8px;width:28px;border:1px solid #E2E8F0">#</th>'
+        + '<th style="padding:6px 8px;text-align:left;border:1px solid #E2E8F0">Atividade</th>'
+        + '<th style="padding:6px 8px;width:110px;border:1px solid #E2E8F0">Responsável</th>'
+        + '<th style="padding:6px 8px;width:65px;text-align:center;border:1px solid #E2E8F0">Prior.</th>'
+        + '<th style="padding:6px 8px;width:72px;text-align:center;border:1px solid #E2E8F0">Início</th>'
+        + '<th style="padding:6px 8px;width:72px;text-align:center;border:1px solid #E2E8F0">Fim</th>'
+        + '<th style="padding:6px 8px;width:44px;text-align:right;border:1px solid #E2E8F0">Hrs</th>'
+        + '<th style="padding:6px 8px;width:38px;text-align:center;border:1px solid #E2E8F0">OK</th>'
+        + '</tr></thead><tbody>';
+      mod.rows.forEach((r,i) => {
+        const bg=i%2===0?'#fff':'#FAFAFA';
+        const pb=r.prio==='Alta'?'#FEE2E2':r.prio==='Média'?'#FEF3C7':'#DCFCE7';
+        const pc=r.prio==='Alta'?'#991B1B':r.prio==='Média'?'#92400E':'#166534';
+        const di=r.dt_ini?r.dt_ini.split('-').reverse().join('/'):'—';
+        const df=r.dt_fim?r.dt_fim.split('-').reverse().join('/'):'—';
+        h += '<tr style="background:'+bg+'"><td style="padding:5px 8px;text-align:center;color:#94A3B8;border:1px solid #F0F0F0">'+seq+'</td>'
+          + '<td style="padding:5px 8px;border:1px solid #F0F0F0">'+escH(r.ativ)+'</td>'
+          + '<td style="padding:5px 8px;border:1px solid #F0F0F0">'+escH(r.resp)+'</td>'
+          + '<td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0"><span style="background:'+pb+';color:'+pc+';padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">'+r.prio+'</span></td>'
+          + '<td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0;font-size:10px">'+di+'</td>'
+          + '<td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0;font-size:10px">'+df+'</td>'
+          + '<td style="padding:5px 8px;text-align:right;font-weight:700;color:#2563EB;border:1px solid #F0F0F0">'+r.horas+'h</td>'
+          + '<td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">'+(r.ok?'<span style="color:#16A34A;font-weight:700">✓</span>':'<span style="color:#D1D5DB">○</span>')+'</td></tr>';
+        seq++;
+      });
+      h += '<tr style="background:#EFF6FF"><td colspan="6" style="padding:6px 8px;font-weight:700;color:#1A3E6E;text-align:right;border:1px solid #E2E8F0">Subtotal</td>'
+        + '<td style="padding:6px 8px;text-align:right;font-weight:800;color:#EA580C;border:1px solid #E2E8F0">'+sub+'h</td><td style="border:1px solid #E2E8F0"></td></tr>';
+      h += '</tbody></table></div>';
+    });
+    return h;
+  }
+
+  // ── Tabela aceite ──
+  function buildAceite() {
+    let h='<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1A3E6E;color:#fff">'
+      + '<th style="padding:7px 10px;width:28px">#</th><th style="padding:7px 10px;text-align:left">Atividade</th>'
+      + '<th style="padding:7px 10px;width:110px;text-align:left">Módulo</th><th style="padding:7px 10px;width:90px;text-align:center">OK Cliente</th>'
+      + '</tr></thead><tbody>';
+    let seq=1;
+    horasData.modulos.forEach(mod => {
+      mod.rows.forEach((r,i) => {
+        const bg=seq%2===0?'#F8FAFC':'#fff';
+        h += '<tr style="background:'+bg+'"><td style="padding:5px 10px;text-align:center;color:#94A3B8;border-bottom:1px solid #E2E8F0">'+seq+'</td>'
+          + '<td style="padding:5px 10px;border-bottom:1px solid #E2E8F0">'+escH(r.ativ)+'</td>'
+          + '<td style="padding:5px 10px;font-size:10px;color:'+mod.color+';border-bottom:1px solid #E2E8F0">'+escH(mod.title.split('—')[0].trim())+'</td>'
+          + '<td style="padding:5px 10px;text-align:center;border-bottom:1px solid #E2E8F0">'+(r.ok
+              ? '<span style="background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700">✓ Aprovado</span>'
+              : '<span style="background:#F1F5F9;color:#94A3B8;padding:2px 10px;border-radius:10px;font-size:10px">○ Pendente</span>')
+          + '</td></tr>';
+        seq++;
+      });
+    });
+    h += '<tr style="background:#EFF6FF"><td colspan="2" style="padding:7px 10px;font-weight:700;color:#1A3E6E;text-align:right">Aceite total</td>'
+      + '<td style="padding:7px 10px;font-weight:800;color:'+(pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626')+'">'+(pct)+'%</td>'
+      + '<td style="padding:7px 10px;text-align:center;font-weight:700;color:#1A3E6E">'+okCt+'/'+allRows.length+'</td></tr>';
+    h += '</tbody></table>';
+    return h;
+  }
+
+  const ganttHTML  = buildGantt();
+  const horasHTML  = buildHoras();
+  const aceiteHTML = buildAceite();
+
+  return `${'<!DOCTYPE html>'}<html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Escopo — ` + escH(empresa) + `</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12px;color:#1E293B;background:#fff;line-height:1.5}
+.page{max-width:820px;margin:0 auto;padding:28px 36px}
+.cover{padding-bottom:28px;border-bottom:3px solid #1A3E6E;margin-bottom:0}
+.cover-top{background:linear-gradient(135deg,#0F2A4A 0%,#1A3E6E 60%,#2563EB 100%);padding:40px 36px 30px;border-radius:0 0 16px 16px;color:#fff;margin-bottom:20px}
+.badge{display:inline-block;background:#EA580C;color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:16px}
+h1{font-size:34px;font-weight:900;margin-bottom:6px}
+.cover-sub{font-size:15px;font-weight:600;color:#93C5FD;margin-bottom:4px}
+.cover-desc{font-size:12px;color:#BFDBFE;margin-bottom:20px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.meta-item{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:9px 13px}
+.meta-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#93C5FD;margin-bottom:2px}
+.meta-value{font-size:13px;font-weight:600;color:#fff}
+.companies{display:flex;justify-content:space-between;align-items:center;padding:16px 0}
+.co-block{text-align:center}
+.co-role{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94A3B8;margin-bottom:3px}
+.co-name{font-size:15px;font-weight:800;color:#1A3E6E}
+.co-detail{font-size:11px;color:#64748B;margin-top:2px}
+.co-x{font-size:22px;color:#CBD5E1;font-weight:300}
+.status-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
+.aviso{background:#FFF7ED;border:1px solid #FED7AA;border-radius:6px;padding:10px 14px;font-size:11px;color:#92400E;margin-top:12px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.kpi{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;text-align:center}
+.kpi-v{font-size:22px;font-weight:800}
+.kpi-l{font-size:10px;color:#64748B;margin-top:2px}
+.section{margin-top:28px}
+.sec-num{font-size:11px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.sec-title{font-size:17px;font-weight:800;color:#1A3E6E;border-bottom:2px solid #1A3E6E;padding-bottom:7px;margin-bottom:13px}
+.sec-text{font-size:12px;color:#374151;line-height:1.7;margin-bottom:12px}
+.obj-box{border-left:4px solid;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px}
+.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sc-item{display:flex;gap:10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px}
+.sc-num{font-size:20px;font-weight:900;flex-shrink:0;line-height:1.1}
+.sc-item strong{display:block;font-size:12px;margin-bottom:2px}
+.sc-item span{font-size:11px;color:#64748B}
+ul.list{list-style:none;padding:0}
+ul.list li{padding:5px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;display:flex;gap:8px}
+.sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:18px}
+.sign-line{border-bottom:1px solid #374151;height:50px;margin-bottom:7px}
+.sign-name{font-size:12px;font-weight:600;color:#374151}
+.sign-detail{font-size:11px;color:#64748B}
+.footer{text-align:center;font-size:10px;color:#94A3B8;margin-top:30px;padding-top:10px;border-top:1px solid #E2E8F0}
+.total-box{text-align:right;background:#EFF6FF;border-radius:6px;padding:9px 13px;font-size:14px;font-weight:800;color:#1A3E6E;margin-top:8px}
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:12mm 14mm 16mm}
+  .pb{page-break-before:always}
+  .cover{page-break-after:always}
+  .no-print{display:none!important}
+}
+</style></head><body>
+<div class="page">
+
+<div class="cover">
+<div class="cover-top">
+<div class="badge">Escopo de Projeto · ` + escH(stEsc) + `</div>
+<h1>` + escH(empresa) + `</h1>
+<div class="cover-sub">Revitalização do Processo Logístico</div>
+<div class="cover-desc">Implantação das rotinas de Recebimento, Expedição e Operação de Separação — Sankhya OM</div>
+<div class="meta-grid">
+<div class="meta-item"><div class="meta-label">Data do Escopo</div><div class="meta-value">` + escH(dataDoc) + `</div></div>
+<div class="meta-item"><div class="meta-label">Versão</div><div class="meta-value">` + escH(versao) + `</div></div>
+<div class="meta-item"><div class="meta-label">Sistema</div><div class="meta-value">Sankhya OM</div></div>
+<div class="meta-item"><div class="meta-label">Total Estimado</div><div class="meta-value" style="color:#FCD34D">` + grand + `h</div></div>
+</div></div>
+<div class="companies">
+<div class="co-block"><div class="co-role">Empresa Cliente</div><div class="co-name">` + escH(empresa) + `</div></div>
+<div class="co-x">×</div>
+<div class="co-block"><div class="co-role">Empresa de Consultoria</div><div class="co-name">Panice Tecnologia</div><div class="co-detail">Consultor: Alexsandro Lopes</div></div>
+</div>
+<div class="status-row">
+<span class="pill" style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE">📋 ` + escH(stEsc) + `</span>
+<span class="pill" style="background:#F1F5F9;color:#475569;border-color:#CBD5E1">🚀 ` + escH(stProj) + `</span>
+<span class="pill" style="background:` + (pct===100?'#DCFCE7':pct>=50?'#FFF7ED':'#FEF2F2') + `;color:` + (pct===100?'#166534':pct>=50?'#92400E':'#DC2626') + `;border-color:` + (pct===100?'#86EFAC':pct>=50?'#FED7AA':'#FCA5A5') + `">✓ Aceite: ` + pct + `% (` + okCt + `/` + allRows.length + `)</span>
+</div>
+<div class="aviso">⚠ Sujeito a alterações — aprovação formal do cliente necessária para início.</div>
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 1</div><div class="sec-title">Objetivo do Projeto</div>
+<p class="sec-text">Revitalizar o processo logístico da <strong>` + escH(empresa) + `</strong> por meio das rotinas nativas do <strong>Sankhya OM</strong>, eliminando processos manuais e garantindo rastreabilidade completa.</p>
+<div class="obj-box" style="background:#EFF6FF;border-color:#2563EB"><h4 style="color:#1D4ED8;font-size:12px;margin-bottom:4px">🎯 Problema identificado</h4><p style="font-size:12px;color:#374151">Recebimento e expedição manuais, sem conferência por CB, sem visibilidade da situação logística e sem rastreabilidade dos operadores.</p></div>
+<div class="obj-box" style="background:#F0FDF4;border-color:#16A34A"><h4 style="color:#166534;font-size:12px;margin-bottom:4px">✅ Solução proposta</h4><p style="font-size:12px;color:#374151">Conferência cega no recebimento, Operação de Separação com cancelamento/reinício, conferência de saída por CB, etiquetas de volume e identificação de operadores via TSIUSU.</p></div>
+<div class="obj-box" style="background:#FFF7ED;border-color:#EA580C"><h4 style="color:#C2410C;font-size:12px;margin-bottom:4px">📈 Resultados esperados</h4><p style="font-size:12px;color:#374151">Redução de divergências, agilidade na expedição, rastreabilidade por operador e visibilidade em tempo real para gestores e vendedores.</p></div>
+<div class="kpi-row"><div class="kpi"><div class="kpi-v" style="color:#2563EB">` + grand + `h</div><div class="kpi-l">Total estimado</div></div><div class="kpi"><div class="kpi-v" style="color:#EA580C">` + horasData.modulos.length + `</div><div class="kpi-l">Módulos</div></div><div class="kpi"><div class="kpi-v" style="color:#7C3AED">` + allRows.length + `</div><div class="kpi-l">Atividades</div></div><div class="kpi"><div class="kpi-v" style="color:` + (pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626') + `">` + pct + `%</div><div class="kpi-l">Aceite</div></div></div>
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 2</div><div class="sec-title">Escopo e Fora do Escopo</div>
+<p class="sec-text" style="font-weight:600;margin-bottom:8px">✅ Incluído:</p>
+<div class="scope-grid">
+<div class="sc-item"><div class="sc-num" style="color:#2563EB">01</div><div><strong>Recebimento</strong><span>Conferência cega, fila de conferência, etiquetagem automática</span></div></div>
+<div class="sc-item"><div class="sc-num" style="color:#EA580C">02</div><div><strong>Expedição / Separação</strong><span>Situação logística, Operação de Separação, cancelamento/reinício, conferência CB, etiqueta de volume</span></div></div>
+<div class="sc-item"><div class="sc-num" style="color:#7C3AED">03</div><div><strong>Etiquetas</strong><span>Produto (CB+QR) e volume (NF + endereço de entrega)</span></div></div>
+<div class="sc-item"><div class="sc-num" style="color:#0891B2">04</div><div><strong>Rastreabilidade</strong><span>Identificação de operadores via TSIUSU (CODUSU/NOMEUSU)</span></div></div>
+</div>
+<p class="sec-text" style="font-weight:600;margin-top:12px;margin-bottom:8px">❌ Fora do escopo:</p>
+<ul class="list">
+<li><span style="color:#DC2626;font-weight:700">✕</span>WMS — solução via rotinas nativas do Sankhya OM</li>
+<li><span style="color:#DC2626;font-weight:700">✕</span>Integração com e-commerce</li>
+<li><span style="color:#DC2626;font-weight:700">✕</span>Módulo de inventário / contagem cíclica</li>
+<li><span style="color:#DC2626;font-weight:700">✕</span>Customizações além de parametrização nativa</li>
+<li><span style="color:#DC2626;font-weight:700">✕</span>Hardware (leitores, impressoras) — fornecimento pelo cliente</li>
+</ul>
+</div>
+
+
+<div class="section">
+<div class="sec-num">Seção 3</div><div class="sec-title">Premissas e Dependências</div>
+<ul class="list">
+<li><span style="color:#16A34A;font-weight:700">✔</span>Acesso ao Sankhya OM (produção e homologação) fornecido pela TI do cliente</li>
+<li><span style="color:#16A34A;font-weight:700">✔</span>Equipe de TI disponível durante toda a implantação</li>
+<li><span style="color:#16A34A;font-weight:700">✔</span>Hardware (leitores CB, impressoras) adquirido e configurado pelo cliente</li>
+<li><span style="color:#16A34A;font-weight:700">✔</span>SKUs higienizados com código de barras antes do go-live</li>
+<li><span style="color:#16A34A;font-weight:700">✔</span>Disponibilidade da equipe operacional para treinamentos</li>
+<li><span style="color:#16A34A;font-weight:700">✔</span>Participação da diretoria na validação das etapas</li>
+</ul>
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 4</div><div class="sec-title">Estimativa de Horas e Responsabilidades</div>
+` + horasHTML + `
+<div class="total-box">TOTAL DO PROJETO: <span style="color:#EA580C">` + grand + `h</span></div>
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 5</div><div class="sec-title">Cronograma em Grade</div>
+<p class="sec-text">Cada célula colorida indica que a atividade está ativa naquele mês. A coluna laranja ▼ indica o mês atual.</p>
+` + ganttHTML + `
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 6</div><div class="sec-title">Critérios de Aceite</div>
+<p class="sec-text">Projeto entregue quando 100% das atividades tiverem aprovação formal do cliente.</p>
+` + aceiteHTML + `
+</div>
+
+
+<div class="section">
+<div class="sec-num">Seção 7</div><div class="sec-title">Riscos Identificados</div>
+<table style="width:100%;border-collapse:collapse;font-size:11px">
+<thead><tr style="background:#374151;color:#fff"><th style="padding:7px 10px;width:28px">#</th><th style="padding:7px 10px;text-align:left">Risco</th><th style="padding:7px 10px;width:80px;text-align:center">Prob.</th><th style="padding:7px 10px;width:80px;text-align:center">Impacto</th><th style="padding:7px 10px;text-align:left">Mitigação</th></tr></thead>
+<tbody>
+<tr><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0">1</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">SKUs sem CB em volume acima do estimado</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Alta</span></td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">Levantamento prévio e plano de higienização</td></tr>
+<tr style="background:#F8FAFC"><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0">2</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">Indisponibilidade de hardware no prazo</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Média</span></td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">Confirmar aquisição antes do início do módulo</td></tr>
+<tr><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0">3</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">Resistência da equipe à mudança de processo</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#DCFCE7;color:#166534;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #E2E8F0"><span style="background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Médio</span></td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0">Treinamento e acompanhamento pós go-live</td></tr>
+<tr style="background:#F8FAFC"><td style="padding:6px 10px;text-align:center">4</td><td style="padding:6px 10px">Ambiente Sankhya desatualizado ou inconsistente</td><td style="padding:6px 10px;text-align:center"><span style="background:#DCFCE7;color:#166534;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="padding:6px 10px;text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td style="padding:6px 10px">Validação do ambiente antes do início</td></tr>
+</tbody></table>
+</div>
+
+
+<div class="section pb">
+<div class="sec-num">Seção 8</div><div class="sec-title">Aprovação e Assinaturas</div>
+<p class="sec-text">Ao assinar, as partes declaram ter lido e concordado com o escopo, premissas, estimativas e critérios de aceite.</p>
+<div class="sign-grid">
+<div><div class="sign-line"></div><div class="sign-name">Alexsandro Lopes</div><div class="sign-detail">Panice Tecnologia — Consultor Responsável</div><div class="sign-detail">Data: ___/___/______</div></div>
+<div><div class="sign-line"></div><div class="sign-name">Responsável — ` + escH(empresa) + `</div><div class="sign-detail">Cargo: _______________________</div><div class="sign-detail">Data: ___/___/______</div></div>
+</div>
+</div>
+
+<div class="footer">` + escH(empresa) + ` · Revitalização Logística · Panice Tecnologia · Consultor: Alexsandro Lopes · ` + today + ` · Versão ` + escH(versao) + ` · Documento Confidencial</div>
+</div>${'</body></html>'}`;
+}
+
+function exportarPDF() {
+  fecharExport();
+  if (!horasData) loadData();
+  let doc;
+  try { doc = gerarDocHTML(); } catch(e) { alert('Erro ao gerar documento: ' + e.message); return; }
+
+  let iframe = document.getElementById('pdf-print-frame');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = 'pdf-print-frame';
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;background:#fff';
+  document.body.appendChild(iframe);
+
+  const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iDoc.open(); iDoc.write(doc); iDoc.close();
+
+  const btnStyle = 'position:fixed;top:12px;z-index:9999;border:none;padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:sans-serif';
+  const closeBtn = iDoc.createElement('button');
+  closeBtn.className = 'no-print';
+  closeBtn.textContent = '✕ Fechar';
+  closeBtn.setAttribute('style', btnStyle + ';right:14px;background:#DC2626;color:#fff');
+  closeBtn.onclick = () => iframe.remove();
+  iDoc.body.appendChild(closeBtn);
+
+  const printBtn = iDoc.createElement('button');
+  printBtn.className = 'no-print';
+  printBtn.textContent = '🖨 Imprimir / Salvar PDF';
+  printBtn.setAttribute('style', btnStyle + ';right:105px;background:#1A3E6E;color:#fff');
+  printBtn.onclick = () => iframe.contentWindow.print();
+  iDoc.body.appendChild(printBtn);
+}
+
+function exportarHTML() {
+  fecharExport();
+  if (!horasData) loadData();
+  let doc;
+  try { doc = gerarDocHTML(); } catch(e) { alert('Erro ao gerar HTML: ' + e.message); return; }
+  const empresa = document.getElementById('capa-company')?.textContent?.trim() || 'CasaBorracha';
+  const slug = empresa.replace(/\s+/g, '') + '_Escopo.html';
+  const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = slug; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ─── CARREGAR DO HASH ───
 function carregarDoHash() {
   const hash = window.location.hash;
   if (!hash || !hash.startsWith('#escopo=')) return false;
@@ -3933,7 +4300,7 @@ function carregarDoHash() {
     }
     if (payload.c) {
       const c = payload.c;
-      ['capa-company','capa-titulo','capa-subtitulo','capa-data','capa-versao'].forEach(id => {
+      ['capa-company','capa-data','capa-versao'].forEach(id => {
         const el = document.getElementById(id);
         if (el && c[id]) el.textContent = c[id];
       });
@@ -3946,664 +4313,24 @@ function carregarDoHash() {
         if (sel) { sel.value = c.status_projeto; updateStatusProjeto(c.status_projeto); }
       }
     }
-    // Show notification
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#DCFCE7;border:1px solid #86EFAC;color:#166534;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.15)';
     banner.textContent = '✓ Dados carregados do link compartilhado!';
     document.body.appendChild(banner);
     setTimeout(() => banner.remove(), 4000);
     return true;
-  } catch(e) {
-    console.error('Erro ao carregar dados do link:', e);
-    return false;
-  }
+  } catch(e) { return false; }
 }
 
-// ── Montar tabelas para PDF ──
-function montarPrintView() {
-  if (!horasData) loadData();
-
-  // Atualizar campos da capa PDF
-  const setPS = (id, val) => { const e = document.getElementById(id); if(e && val) e.textContent = val; };
-  setPS('ps-company', document.getElementById('capa-company')?.textContent);
-  setPS('ps-title',   document.getElementById('capa-titulo')?.textContent);
-  setPS('ps-sub',     document.getElementById('capa-subtitulo')?.textContent);
-  setPS('ps-data',    document.getElementById('capa-data')?.textContent);
-  setPS('ps-versao',  document.getElementById('capa-versao')?.textContent);
-  setPS('ps-badge',   document.getElementById('capa-version-display')?.textContent);
-  setPS('ps-status-escopo',  document.getElementById('capa-status-escopo')?.options[document.getElementById('capa-status-escopo')?.selectedIndex]?.text);
-  setPS('ps-status-projeto', document.getElementById('capa-status-projeto')?.options[document.getElementById('capa-status-projeto')?.selectedIndex]?.text);
-  setPS('ps-footer-company', document.getElementById('capa-company')?.textContent);
-
-  // Total horas
-  const grand = horasData.modulos.reduce((s,m) => s + m.rows.reduce((ss,r) => ss+(Number(r.horas)||0), 0), 0);
-  setPS('ps-total-horas', grand + 'h');
-
-  // Tabela de horas
-  let horasHTML = '';
-  let seq = 1;
-  horasData.modulos.forEach(mod => {
-    const sub = mod.rows.reduce((s,r) => s+(Number(r.horas)||0), 0);
-    horasHTML += '<table class="ps-table" style="margin-bottom:10px">'
-      + '<thead><tr><th colspan="5" style="background:'+mod.color+'">' + escH(mod.title) + ' — ' + sub + 'h</th></tr>'
-      + '<tr style="background:#374151"><th style="width:30px">#</th><th>Atividade</th><th style="width:130px">Responsável</th><th style="width:80px">Prioridade</th><th style="width:60px;text-align:right">Horas</th></tr></thead><tbody>';
-    mod.rows.forEach(r => {
-      const prioBg = r.prio==='Alta'?'#FEE2E2':r.prio==='Média'?'#FEF3C7':'#DCFCE7';
-      const prioC  = r.prio==='Alta'?'#991B1B':r.prio==='Média'?'#92400E':'#166534';
-      horasHTML += '<tr><td style="color:#94A3B8;text-align:center">' + seq++ + '</td>'
-        + '<td>' + escH(r.ativ) + '</td>'
-        + '<td style="font-size:11px">' + escH(r.resp) + '</td>'
-        + '<td><span style="background:'+prioBg+';color:'+prioC+';padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600">' + r.prio + '</span></td>'
-        + '<td style="text-align:right;font-weight:700;color:#2563EB">' + r.horas + 'h</td></tr>';
-    });
-    horasHTML += '<tr style="background:#EFF6FF"><td colspan="4" style="font-weight:700;color:#1A3E6E;text-align:right">Subtotal</td><td style="text-align:right;font-weight:800;color:#EA580C">' + sub + 'h</td></tr>';
-    horasHTML += '</tbody></table>';
-  });
-  horasHTML += '<div style="text-align:right;font-size:15px;font-weight:800;color:#1A3E6E;padding:8px 12px;background:#EFF6FF;border-radius:6px">TOTAL DO PROJETO: <span style="color:#EA580C">' + grand + 'h</span></div>';
-  const htEl = document.getElementById('ps-horas-table');
-  if (htEl) htEl.innerHTML = horasHTML;
-
-  // Cronograma
-  let cronHTML = '<table class="ps-table">'
-    + '<thead><tr><th>#</th><th>Módulo</th><th>Atividade</th><th>Responsável</th><th>Dt. Início</th><th>Dt. Fim</th><th>Horas</th></tr></thead><tbody>';
-  let cSeq = 1;
-  horasData.modulos.forEach(mod => {
-    mod.rows.forEach(r => {
-      cronHTML += '<tr>'
-        + '<td style="color:#94A3B8;text-align:center">' + cSeq++ + '</td>'
-        + '<td style="font-size:11px;color:'+mod.color+'"><strong>' + escH(mod.title.split('—')[0].trim()) + '</strong></td>'
-        + '<td>' + escH(r.ativ) + '</td>'
-        + '<td style="font-size:11px">' + escH(r.resp) + '</td>'
-        + '<td style="font-size:11px;white-space:nowrap">' + (r.dt_ini ? r.dt_ini.split('-').reverse().join('/') : '—') + '</td>'
-        + '<td style="font-size:11px;white-space:nowrap">' + (r.dt_fim ? r.dt_fim.split('-').reverse().join('/') : '—') + '</td>'
-        + '<td style="text-align:right;font-weight:700">' + r.horas + 'h</td>'
-        + '</tr>';
-    });
-  });
-  cronHTML += '</tbody></table>';
-  const ctEl = document.getElementById('ps-cronograma-table');
-  if (ctEl) ctEl.innerHTML = cronHTML;
-
-  // Critérios de aceite
-  let aceiteHTML = '<table class="ps-table">'
-    + '<thead><tr><th style="width:30px">#</th><th>Atividade / Entregável</th><th style="width:130px">Módulo</th><th style="width:80px;text-align:center">OK Cliente</th></tr></thead><tbody>';
-  let aSeq = 1;
-  horasData.modulos.forEach(mod => {
-    mod.rows.forEach(r => {
-      const okStyle = r.ok ? 'background:#DCFCE7;color:#166534' : 'background:#F8FAFC;color:#94A3B8';
-      aceiteHTML += '<tr><td style="color:#94A3B8;text-align:center">' + aSeq++ + '</td>'
-        + '<td>' + escH(r.ativ) + '</td>'
-        + '<td style="font-size:11px;color:'+mod.color+'">' + escH(mod.title.split('—')[0].trim()) + '</td>'
-        + '<td style="text-align:center"><span style="'+okStyle+';padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">' + (r.ok ? '✓ Aprovado' : '○ Pendente') + '</span></td></tr>';
-    });
-  });
-  aceiteHTML += '</tbody></table>';
-  const atEl = document.getElementById('ps-aceite-table');
-  if (atEl) atEl.innerHTML = aceiteHTML;
-}
-
-function exportarPDF() {
-  fecharExport();
-  if (!horasData) loadData();
-
-  // ── Dados base ──
-  const empresa   = document.getElementById('capa-company')?.textContent?.trim()  || 'Casa da Borracha';
-  const dataDoc   = document.getElementById('capa-data')?.textContent?.trim()      || new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const versao    = document.getElementById('capa-versao')?.textContent?.trim()    || '0.2';
-  const selEsc    = document.getElementById('capa-status-escopo');
-  const selProj   = document.getElementById('capa-status-projeto');
-  const stEsc     = selEsc  ? selEsc.options[selEsc.selectedIndex].text   : 'Em Análise';
-  const stProj    = selProj ? selProj.options[selProj.selectedIndex].text : 'Pendente';
-  const grand     = horasData.modulos.reduce((s,m)=>s+m.rows.reduce((ss,r)=>ss+(Number(r.horas)||0),0),0);
-  const allRows   = horasData.modulos.flatMap(m=>m.rows.map(r=>({...r,modTitle:m.title,modColor:m.color})));
-  const okCt      = allRows.filter(r=>r.ok).length;
-  const pct       = allRows.length ? Math.round(okCt/allRows.length*100) : 0;
-  const today     = new Date().toLocaleDateString('pt-BR');
-
-  // ── Módulo 1 e 2 subtotais ──
-  const sub0 = horasData.modulos[0]?.rows.reduce((s,r)=>s+(Number(r.horas)||0),0)||0;
-  const sub1 = horasData.modulos[1]?.rows.reduce((s,r)=>s+(Number(r.horas)||0),0)||0;
-
-  // ── GANTT SVG ──
-  function buildGantt() {
-    const withDates = allRows.filter(r=>r.dt_ini&&r.dt_fim);
-    if (!withDates.length) return '<p style="color:#94A3B8;font-style:italic">Nenhuma atividade com datas definidas.</p>';
-
-    const dates  = withDates.flatMap(r=>[new Date(r.dt_ini),new Date(r.dt_fim)]);
-    let   minD   = new Date(Math.min(...dates));
-    let   maxD   = new Date(Math.max(...dates));
-    minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
-    maxD = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0);
-    const totalMs = maxD - minD;
-    const pct2  = d => Math.max(0, Math.min(100, (new Date(d)-minD)/totalMs*100));
-    const pctW  = (s,e)=> Math.max(0.5, (new Date(e)-new Date(s))/totalMs*100);
-
-    const months = [];
-    let cur = new Date(minD);
-    while (cur <= maxD) {
-      const nm = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
-      const start = pct2(cur);
-      const end   = pct2(nm > maxD ? maxD : nm);
-      months.push({l: cur.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), start, w: end-start});
-      cur = nm;
-    }
-
-    const LABEL = 200;
-    const ROW_H = 28;
-    const H     = withDates.length * ROW_H + 60;
-    const RESP_C = {'Consultor':'#2563EB','TI-Cliente':'#16A34A','TI+Consultoria':'#7C3AED','Diretoria Cliente':'#DC2626'};
-
-    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 ${H}" style="width:100%;font-family:-apple-system,sans-serif">`;
-
-    // Month headers
-    svg += `<rect x="0" y="0" width="900" height="24" fill="#1A3E6E"/>`;
-    svg += `<rect x="0" y="0" width="${LABEL}" height="24" fill="#0F2A4A"/>`;
-    svg += `<text x="${LABEL/2}" y="16" text-anchor="middle" font-size="10" fill="#93C5FD" font-weight="700">ATIVIDADE</text>`;
-    months.forEach(m => {
-      const x = LABEL + m.start/100*(900-LABEL);
-      const w = m.w/100*(900-LABEL);
-      svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#E2E8F0" stroke-width="0.5"/>`;
-      svg += `<text x="${x+w/2}" y="16" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">${m.l}</text>`;
-    });
-
-    // Rows
-    let lastMod = '';
-    withDates.forEach((row, ri) => {
-      const y = 28 + ri*ROW_H;
-      if (row.modTitle !== lastMod) {
-        lastMod = row.modTitle;
-        svg += `<rect x="0" y="${y}" width="900" height="${ROW_H}" fill="#F1F5F9"/>`;
-        svg += `<text x="8" y="${y+18}" font-size="10" font-weight="700" fill="${row.modColor}">${escH(row.modTitle.split('—')[0].trim())}</text>`;
-        return;
-      }
-      const bg = ri%2===0 ? '#fff' : '#FAFAFA';
-      svg += `<rect x="0" y="${y}" width="900" height="${ROW_H}" fill="${bg}"/>`;
-      svg += `<line x1="0" y1="${y+ROW_H}" x2="900" y2="${y+ROW_H}" stroke="#F0F0F0" stroke-width="0.5"/>`;
-
-      // Label (truncate)
-      const label = row.ativ.length > 32 ? row.ativ.substring(0,30)+'…' : row.ativ;
-      svg += `<text x="8" y="${y+18}" font-size="10" fill="${row.ok?'#94A3B8':'#1E293B'}" ${row.ok?'text-decoration="line-through"':''}>${escH(label)}</text>`;
-
-      // Bar
-      const barX = LABEL + pct2(row.dt_ini)/100*(900-LABEL);
-      const barW = pctW(row.dt_ini,row.dt_fim)/100*(900-LABEL);
-      const c    = RESP_C[row.resp]||'#2563EB';
-      svg += `<rect x="${barX}" y="${y+5}" width="${Math.max(barW,4)}" height="${ROW_H-10}" rx="3" fill="${c}" opacity="${row.ok?'0.5':'0.8'}"/>`;
-      if (barW > 30) svg += `<text x="${barX+barW/2}" y="${y+16}" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">${row.horas}h</text>`;
-
-      // Today line
-      const todayPct = pct2(new Date());
-      if (todayPct > 0 && todayPct < 100) {
-        const todayX = LABEL + todayPct/100*(900-LABEL);
-        if (ri===0) svg += `<line x1="${todayX}" y1="24" x2="${todayX}" y2="${H}" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>`;
-      }
-    });
-
-    // Legend
-    svg += `<rect x="0" y="${H-22}" width="900" height="22" fill="#F8FAFC"/>`;
-    let lx = 8;
-    Object.entries(RESP_C).forEach(([k,v]) => {
-      svg += `<rect x="${lx}" y="${H-15}" width="10" height="10" rx="2" fill="${v}"/>`;
-      svg += `<text x="${lx+14}" y="${H-6}" font-size="9" fill="#374151">${k}</text>`;
-      lx += k.length*5.5 + 24;
-    });
-    svg += `<line x1="${lx}" y1="${H-10}" x2="${lx+20}" y2="${H-10}" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2"/>`;
-    svg += `<text x="${lx+24}" y="${H-6}" font-size="9" fill="#374151">Hoje</text>`;
-    svg += '</svg>';
-    return svg;
-  }
-
-  // ── Tabela de horas ──
-  function buildHorasTable() {
-    let h = '';
-    let seq = 1;
-    horasData.modulos.forEach(mod => {
-      const sub = mod.rows.reduce((s,r)=>s+(Number(r.horas)||0),0);
-      h += `<div style="margin-bottom:4px">
-        <div style="background:${mod.color};color:#fff;padding:8px 12px;font-size:12px;font-weight:700;border-radius:4px 4px 0 0">
-          ${escH(mod.title)} — ${sub}h
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #E2E8F0;border-top:none">
-        <thead><tr style="background:#F1F5F9">
-          <th style="padding:6px 8px;text-align:center;width:28px;border:1px solid #E2E8F0">#</th>
-          <th style="padding:6px 8px;text-align:left;border:1px solid #E2E8F0">Atividade / Entregável</th>
-          <th style="padding:6px 8px;text-align:left;width:115px;border:1px solid #E2E8F0">Responsável</th>
-          <th style="padding:6px 8px;text-align:center;width:65px;border:1px solid #E2E8F0">Prioridade</th>
-          <th style="padding:6px 8px;text-align:center;width:75px;border:1px solid #E2E8F0">Dt. Início</th>
-          <th style="padding:6px 8px;text-align:center;width:75px;border:1px solid #E2E8F0">Dt. Fim</th>
-          <th style="padding:6px 8px;text-align:right;width:45px;border:1px solid #E2E8F0">Horas</th>
-          <th style="padding:6px 8px;text-align:center;width:45px;border:1px solid #E2E8F0">OK</th>
-        </tr></thead><tbody>`;
-      mod.rows.forEach((r,i) => {
-        const bg  = i%2===0?'#fff':'#FAFAFA';
-        const pBg = r.prio==='Alta'?'#FEE2E2':r.prio==='Média'?'#FEF3C7':'#DCFCE7';
-        const pC  = r.prio==='Alta'?'#991B1B':r.prio==='Média'?'#92400E':'#166534';
-        const dI  = r.dt_ini?r.dt_ini.split('-').reverse().join('/'):'—';
-        const dF  = r.dt_fim?r.dt_fim.split('-').reverse().join('/'):'—';
-        h += `<tr style="background:${bg}">
-          <td style="padding:5px 8px;text-align:center;color:#94A3B8;border:1px solid #F0F0F0">${seq++}</td>
-          <td style="padding:5px 8px;border:1px solid #F0F0F0">${escH(r.ativ)}</td>
-          <td style="padding:5px 8px;border:1px solid #F0F0F0">${escH(r.resp)}</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">
-            <span style="background:${pBg};color:${pC};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">${r.prio}</span>
-          </td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${dI}</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${dF}</td>
-          <td style="padding:5px 8px;text-align:right;font-weight:700;color:#2563EB;border:1px solid #F0F0F0">${r.horas}h</td>
-          <td style="padding:5px 8px;text-align:center;border:1px solid #F0F0F0">${r.ok
-            ?'<span style="color:#16A34A;font-weight:700">✓</span>'
-            :'<span style="color:#D1D5DB">○</span>'}</td>
-        </tr>`;
-      });
-      h += `<tr style="background:#EFF6FF">
-        <td colspan="6" style="padding:6px 8px;text-align:right;font-weight:700;color:#1A3E6E;border:1px solid #E2E8F0">Subtotal ${escH(mod.title.split('—')[0].trim())}</td>
-        <td style="padding:6px 8px;text-align:right;font-weight:800;color:#EA580C;border:1px solid #E2E8F0">${sub}h</td>
-        <td style="border:1px solid #E2E8F0"></td>
-      </tr>`;
-      h += '</tbody></table></div>';
-    });
-    return h;
-  }
-
-  // ── Tabela de aceite ──
-  function buildAceiteTable() {
-    let h = '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1A3E6E;color:#fff">'
-      + '<th style="padding:7px 10px;width:28px">#</th>'
-      + '<th style="padding:7px 10px;text-align:left">Atividade / Entregável</th>'
-      + '<th style="padding:7px 10px;width:110px;text-align:left">Módulo</th>'
-      + '<th style="padding:7px 10px;width:90px;text-align:center">OK Cliente</th>'
-      + '</tr></thead><tbody>';
-    let seq = 1;
-    horasData.modulos.forEach(mod => {
-      mod.rows.forEach((r,i) => {
-        const bg = seq%2===0?'#F8FAFC':'#fff';
-        h += `<tr style="background:${bg}">
-          <td style="padding:5px 10px;text-align:center;color:#94A3B8;border-bottom:1px solid #E2E8F0">${seq++}</td>
-          <td style="padding:5px 10px;border-bottom:1px solid #E2E8F0">${escH(r.ativ)}</td>
-          <td style="padding:5px 10px;font-size:10px;color:${mod.color};border-bottom:1px solid #E2E8F0">${escH(mod.title.split('—')[0].trim())}</td>
-          <td style="padding:5px 10px;text-align:center;border-bottom:1px solid #E2E8F0">${r.ok
-            ?'<span style="background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700">✓ Aprovado</span>'
-            :'<span style="background:#F1F5F9;color:#94A3B8;padding:2px 10px;border-radius:10px;font-size:10px">○ Pendente</span>'}</td>
-        </tr>`;
-      });
-    });
-    h += `<tr style="background:#EFF6FF"><td colspan="2" style="padding:7px 10px;font-weight:700;color:#1A3E6E;text-align:right">Total aprovado</td>
-      <td style="padding:7px 10px;font-weight:800;color:${pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626'}">${pct}%</td>
-      <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1A3E6E">${okCt}/${allRows.length}</td></tr>`;
-    h += '</tbody></table>';
-    return h;
-  }
-
-  const ganttSVG   = buildGantt();
-  const horasTable = buildHorasTable();
-  const aceiteTable= buildAceiteTable();
-
-  const doc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Escopo de Projeto — ${escH(empresa)}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12px;color:#1E293B;background:#fff;line-height:1.5}
-.page{max-width:820px;margin:0 auto;padding:28px 36px}
-/* ── CAPA ── */
-.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:0}
-.cover-top{background:linear-gradient(135deg,#0F2A4A 0%,#1A3E6E 60%,#2563EB 100%);padding:48px 40px 36px;border-radius:0 0 24px 24px;color:#fff}
-.cover-badge{display:inline-block;background:#EA580C;color:#fff;font-size:11px;font-weight:700;padding:5px 16px;border-radius:20px;margin-bottom:20px;letter-spacing:.5px}
-.cover-title{font-size:38px;font-weight:900;margin-bottom:8px}
-.cover-sub{font-size:16px;font-weight:600;color:#93C5FD;margin-bottom:6px}
-.cover-desc{font-size:13px;color:#BFDBFE;margin-bottom:24px}
-.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
-.cover-meta-item{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 14px}
-.cover-meta-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#93C5FD;margin-bottom:3px}
-.cover-meta-value{font-size:13px;font-weight:600;color:#fff}
-.cover-companies{display:flex;justify-content:space-between;align-items:center;padding:20px 40px;border-bottom:1px solid #E2E8F0}
-.company-block{text-align:center}
-.company-role{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94A3B8;margin-bottom:4px}
-.company-name{font-size:16px;font-weight:800;color:#1A3E6E}
-.company-contact{font-size:11px;color:#64748B;margin-top:2px}
-.cover-x{font-size:24px;color:#CBD5E1;font-weight:300}
-.cover-footer-info{padding:20px 40px}
-.status-row{display:flex;gap:10px;flex-wrap:wrap}
-.status-pill{padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
-.cover-aviso{background:#FFF7ED;border:1px solid #FED7AA;border-radius:6px;padding:10px 16px;font-size:11px;color:#92400E;margin-top:14px}
-/* ── SUMÁRIO ── */
-.toc-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted #E2E8F0;font-size:12px}
-.toc-num{color:#2563EB;font-weight:700;margin-right:10px}
-/* ── SEÇÕES ── */
-.section{margin-top:0;padding-top:28px}
-.section-num{font-size:11px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.section-title{font-size:18px;font-weight:800;color:#1A3E6E;border-bottom:2px solid #1A3E6E;padding-bottom:8px;margin-bottom:14px}
-.section-text{font-size:12px;color:#374151;line-height:1.7;margin-bottom:12px}
-.objetivo-box{background:#EFF6FF;border-left:4px solid #2563EB;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:14px}
-.objetivo-box h4{font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:4px}
-.objetivo-box p{font-size:12px;color:#374151}
-.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.scope-item{display:flex;gap:10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px}
-.scope-num2{font-size:20px;font-weight:900;flex-shrink:0;line-height:1.1}
-.scope-item strong{display:block;font-size:12px;margin-bottom:2px}
-.scope-item span{font-size:11px;color:#64748B}
-.fora-list{list-style:none;padding:0}
-.fora-list li{padding:6px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;display:flex;gap:8px}
-.fora-list li:before{content:"✕";color:#DC2626;font-weight:700;flex-shrink:0}
-.premissas-list{list-style:none;padding:0}
-.premissas-list li{padding:6px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;display:flex;gap:8px}
-.premissas-list li:before{content:"✔";color:#16A34A;font-weight:700;flex-shrink:0}
-.riscos table{width:100%;border-collapse:collapse;font-size:11px}
-.riscos th{background:#374151;color:#fff;padding:7px 10px;text-align:left}
-.riscos td{padding:6px 10px;border-bottom:1px solid #E2E8F0}
-.riscos tr:nth-child(even) td{background:#F8FAFC}
-.sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:20px}
-.sign-line{border-bottom:1px solid #374151;height:50px;margin-bottom:8px}
-.sign-label{font-size:11px;color:#374151;font-weight:600}
-.sign-label span{font-size:10px;color:#64748B;display:block;font-weight:400;margin-top:2px}
-.footer-doc{text-align:center;font-size:10px;color:#94A3B8;margin-top:32px;padding-top:10px;border-top:1px solid #E2E8F0}
-.gantt-wrap{overflow:hidden;border:1px solid #E2E8F0;border-radius:6px}
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.kpi-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;text-align:center}
-.kpi-val{font-size:22px;font-weight:800;color:#1A3E6E}
-.kpi-lab{font-size:10px;color:#64748B;margin-top:2px}
-@media print{
-  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  @page{size:A4;margin:12mm 14mm 16mm}
-  .pb{page-break-before:always}
-  .cover{page-break-after:always}
-}
-</style></head><body>
-<div class="page">
-
-<!-- ════════════ CAPA ════════════ -->
-<div class="cover">
-  <div class="cover-top">
-    <div class="cover-badge">Escopo de Projeto · ${escH(stEsc)}</div>
-    <div class="cover-title">${escH(empresa)}</div>
-    <div class="cover-sub">Revitalização do Processo Logístico</div>
-    <div class="cover-desc">Implantação das rotinas de Recebimento, Expedição e Operação de Separação sobre o ERP Sankhya OM</div>
-    <div class="cover-meta">
-      <div class="cover-meta-item"><div class="cover-meta-label">Data do Escopo</div><div class="cover-meta-value">${escH(dataDoc)}</div></div>
-      <div class="cover-meta-item"><div class="cover-meta-label">Versão do Documento</div><div class="cover-meta-value">${escH(versao)}</div></div>
-      <div class="cover-meta-item"><div class="cover-meta-label">Sistema</div><div class="cover-meta-value">Sankhya OM</div></div>
-      <div class="cover-meta-item"><div class="cover-meta-label">Total Estimado</div><div class="cover-meta-value" style="color:#FCD34D">${grand}h</div></div>
-    </div>
-  </div>
-
-  <div class="cover-companies">
-    <div class="company-block">
-      <div class="company-role">Empresa Cliente</div>
-      <div class="company-name">${escH(empresa)}</div>
-    </div>
-    <div class="cover-x">×</div>
-    <div class="company-block">
-      <div class="company-role">Empresa de Consultoria</div>
-      <div class="company-name">Panice Tecnologia</div>
-      <div class="company-contact">Consultor responsável: Alexsandro Lopes</div>
-    </div>
-  </div>
-
-  <div class="cover-footer-info">
-    <div class="status-row">
-      <span class="status-pill" style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE">📋 Status Escopo: ${escH(stEsc)}</span>
-      <span class="status-pill" style="background:#F1F5F9;color:#475569;border-color:#CBD5E1">🚀 Status Projeto: ${escH(stProj)}</span>
-      <span class="status-pill" style="background:${pct===100?'#DCFCE7':pct>=50?'#FFF7ED':'#FEF2F2'};color:${pct===100?'#166534':pct>=50?'#92400E':'#DC2626'};border-color:${pct===100?'#86EFAC':pct>=50?'#FED7AA':'#FCA5A5'}">✓ Aceite: ${pct}% (${okCt}/${allRows.length})</span>
-    </div>
-    <div class="cover-aviso">⚠ Documento sujeito a alterações — aprovação formal do cliente necessária para início do desenvolvimento.</div>
-  </div>
-</div>
-
-<!-- ════════════ SUMÁRIO ════════════ -->
-<div class="section pb">
-  <div class="section-num">Índice</div>
-  <div class="section-title">Sumário</div>
-  ${[
-    ['1','Objetivo do Projeto'],
-    ['2','Escopo e Fora do Escopo'],
-    ['3','Premissas e Dependências'],
-    ['4','Estimativa de Horas e Responsabilidades'],
-    ['5','Cronograma'],
-    ['6','Critérios de Aceite'],
-    ['7','Riscos Identificados'],
-    ['8','Aprovação e Assinaturas'],
-  ].map(([n,t])=>`<div class="toc-item"><div><span class="toc-num">${n}.</span>${t}</div><div style="color:#94A3B8">${n === '1'?'2':n==='2'?'3':n==='3'?'3':n==='4'?'4':n==='5'?'5':n==='6'?'6':n==='7'?'7':'8'}</div></div>`).join('')}
-</div>
-
-<!-- ════════════ 1. OBJETIVO ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 1</div>
-  <div class="section-title">Objetivo do Projeto</div>
-  <p class="section-text">Revitalizar e digitalizar o processo logístico da <strong>${escH(empresa)}</strong> por meio da configuração e implantação das rotinas nativas do ERP <strong>Sankhya OM</strong>, eliminando processos manuais, reduzindo divergências no recebimento e expedição, e garantindo rastreabilidade completa das operações logísticas.</p>
-
-  <div class="objetivo-box">
-    <h4>🎯 Problema identificado</h4>
-    <p>Processos de recebimento e expedição realizados manualmente, sem conferência por código de barras, sem visibilidade de situação logística em tempo real e sem rastreabilidade de quem realizou cada operação.</p>
-  </div>
-  <div class="objetivo-box" style="background:#F0FDF4;border-color:#16A34A">
-    <h4 style="color:#166534">✅ Solução proposta</h4>
-    <p>Implantação da conferência cega no recebimento, situação logística com Operação de Separação parametrizada, conferência de saída por código de barras, etiquetas de volume com dados de entrega e identificação digital de operadores via TSIUSU.</p>
-  </div>
-  <div class="objetivo-box" style="background:#FFF7ED;border-color:#EA580C">
-    <h4 style="color:#C2410C">📈 Resultados esperados</h4>
-    <p>Redução de divergências no recebimento, agilidade na expedição, rastreabilidade completa por operador, visibilidade do fluxo logístico em tempo real para gestores e vendedores.</p>
-  </div>
-
-  <div class="kpi-row" style="margin-top:16px">
-    <div class="kpi-card"><div class="kpi-val" style="color:#2563EB">${grand}h</div><div class="kpi-lab">Total estimado</div></div>
-    <div class="kpi-card"><div class="kpi-val" style="color:#EA580C">${horasData.modulos.length}</div><div class="kpi-lab">Módulos</div></div>
-    <div class="kpi-card"><div class="kpi-val" style="color:#7C3AED">${allRows.length}</div><div class="kpi-lab">Atividades</div></div>
-    <div class="kpi-card"><div class="kpi-val" style="color:${pct===100?'#16A34A':pct>=50?'#EA580C':'#DC2626'}">${pct}%</div><div class="kpi-lab">Aceite do cliente</div></div>
-  </div>
-</div>
-
-<!-- ════════════ 2. ESCOPO ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 2</div>
-  <div class="section-title">Escopo e Fora do Escopo</div>
-  <p class="section-text" style="font-weight:600;margin-bottom:10px">✅ O que está incluído:</p>
-  <div class="scope-grid">
-    <div class="scope-item"><div class="scope-num2" style="color:#2563EB">01</div><div><strong>Recebimento</strong><span>Conferência cega, fila de conferência, etiquetagem automática na entrada de NF</span></div></div>
-    <div class="scope-item"><div class="scope-num2" style="color:#EA580C">02</div><div><strong>Expedição — Operação de Separação</strong><span>Situação logística, separação com cancelamento/reinício, conferência de saída CB, etiqueta de volume</span></div></div>
-    <div class="scope-item"><div class="scope-num2" style="color:#7C3AED">03</div><div><strong>Etiquetas</strong><span>Etiqueta de produto (CB + QR Code) e etiqueta de volume com NF e endereço de entrega</span></div></div>
-    <div class="scope-item"><div class="scope-num2" style="color:#0891B2">04</div><div><strong>Rastreabilidade de operadores</strong><span>Identificação via TSIUSU (CODUSU/NOMEUSU) para separadores e conferentes</span></div></div>
-  </div>
-  <p class="section-text" style="font-weight:600;margin-top:14px;margin-bottom:8px">❌ Fora do escopo:</p>
-  <ul class="fora-list">
-    <li>WMS (Warehouse Management System) — solução baseada nas rotinas nativas do Sankhya OM</li>
-    <li>Integração com e-commerce — fora do escopo desta revitalização</li>
-    <li>Módulo de inventário / contagem cíclica — poderá ser escopo de projeto futuro</li>
-    <li>Customizações além de parametrização nativa do ERP</li>
-    <li>Hardware (leitores de código de barras, impressoras) — fornecimento pelo cliente</li>
-  </ul>
-</div>
-
-<!-- ════════════ 3. PREMISSAS ════════════ -->
-<div class="section">
-  <div class="section-num">Seção 3</div>
-  <div class="section-title">Premissas e Dependências</div>
-  <p class="section-text">Para o sucesso da implantação, as seguintes premissas devem ser atendidas pelo cliente:</p>
-  <ul class="premissas-list">
-    <li>Acesso ao ambiente Sankhya OM (produção e homologação) fornecido pela equipe de TI do cliente</li>
-    <li>Equipe de TI do cliente disponível para configurações e suporte durante a implantação</li>
-    <li>Hardware de leitores de código de barras e impressoras de etiqueta adquiridos e configurados</li>
-    <li>Cadastro de SKUs higienizado — produtos com código de barras cadastrado antes do go-live</li>
-    <li>Participação de representante da diretoria para validação e aprovação de etapas</li>
-    <li>Disponibilidade da equipe operacional para treinamentos no prazo acordado</li>
-    <li>Ambiente de homologação espelhando o ambiente de produção para testes</li>
-  </ul>
-</div>
-
-<!-- ════════════ 4. HORAS ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 4</div>
-  <div class="section-title">Estimativa de Horas e Responsabilidades</div>
-  ${horasTable}
-  <div style="text-align:right;background:#EFF6FF;border-radius:6px;padding:10px 14px;font-size:15px;font-weight:800;color:#1A3E6E;margin-top:8px">
-    TOTAL DO PROJETO: <span style="color:#EA580C">${grand}h</span>
-  </div>
-</div>
-
-<!-- ════════════ 5. CRONOGRAMA ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 5</div>
-  <div class="section-title">Cronograma</div>
-  <p class="section-text">Distribuição das atividades ao longo do tempo. A linha vermelha tracejada indica a data atual. Barras preenchidas = em andamento, barras claras = concluídas (OK Cliente).</p>
-  <div class="gantt-wrap">${ganttSVG}</div>
-</div>
-
-<!-- ════════════ 6. ACEITE ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 6</div>
-  <div class="section-title">Critérios de Aceite</div>
-  <p class="section-text">O projeto é considerado entregue quando <strong>100%</strong> das atividades abaixo tiverem aprovação formal do cliente.</p>
-  ${aceiteTable}
-</div>
-
-<!-- ════════════ 7. RISCOS ════════════ -->
-<div class="section">
-  <div class="section-num">Seção 7</div>
-  <div class="section-title">Riscos Identificados</div>
-  <div class="riscos">
-  <table>
-    <thead><tr><th style="width:28px">#</th><th>Risco</th><th style="width:80px;text-align:center">Probabilidade</th><th style="width:80px;text-align:center">Impacto</th><th>Mitigação</th></tr></thead>
-    <tbody>
-      <tr><td style="text-align:center">1</td><td>SKUs sem código de barras em volume acima do estimado</td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alta</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Levantamento prévio e plano de higienização com TI-Cliente</td></tr>
-      <tr><td style="text-align:center">2</td><td>Indisponibilidade de hardware (leitores/impressoras) no prazo</td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Média</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Confirmar aquisição e instalação antes do início do módulo</td></tr>
-      <tr><td style="text-align:center">3</td><td>Resistência da equipe operacional à mudança de processo</td><td style="text-align:center"><span style="background:#DCFCE7;color:#166534;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="text-align:center"><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Médio</span></td><td>Treinamento, acompanhamento pós go-live e suporte próximo</td></tr>
-      <tr><td style="text-align:center">4</td><td>Ambiente Sankhya OM desatualizado ou inconsistente com homologação</td><td style="text-align:center"><span style="background:#DCFCE7;color:#166534;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Baixa</span></td><td style="text-align:center"><span style="background:#FEE2E2;color:#991B1B;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600">Alto</span></td><td>Validação do ambiente antes do início e alinhamento com Sankhya</td></tr>
-    </tbody>
-  </table>
-  </div>
-</div>
-
-<!-- ════════════ 8. ASSINATURAS ════════════ -->
-<div class="section pb">
-  <div class="section-num">Seção 8</div>
-  <div class="section-title">Aprovação e Assinaturas</div>
-  <p class="section-text">Ao assinar este documento, as partes declaram ter lido, compreendido e concordado com o escopo, premissas, estimativas e critérios de aceite aqui definidos.</p>
-  <div class="sign-grid">
-    <div>
-      <div class="sign-line"></div>
-      <div class="sign-label">Alexsandro Lopes<span>Panice Tecnologia — Consultor Responsável</span><span>Data: ___/___/______</span></div>
-    </div>
-    <div>
-      <div class="sign-line"></div>
-      <div class="sign-label">Responsável — ${escH(empresa)}<span>Cargo: _______________________</span><span>Data: ___/___/______</span></div>
-    </div>
-  </div>
-</div>
-
-<div class="footer-doc">${escH(empresa)} · Revitalização Logística · Panice Tecnologia · Consultor: Alexsandro Lopes · ${today} · Documento Confidencial · Versão ${escH(versao)}</div>
-</div>
-</body></html>`;
-
-  const win = window.open('', '_blank', 'width=960,height=800');
-  if (!win) { alert('Permita pop-ups para este site para gerar o PDF.'); return; }
-  win.document.write(doc);
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 1000);
-}
-
-
-
-// ── Exportar HTML standalone ──
-function exportarHTML() {
-  if (!horasData) loadData();
-  const payload = { h: horasData, c: coletarCapa(), v: 3 };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  // Get current HTML and inject auto-load hash script
-  let docHTML = document.documentElement.outerHTML;
-  // Inject auto-loader at end of body
-  const tag = 'scr'+'ipt'; const autoLoad = '<'+tag+'>window.addEventListener("load",function(){if(typeof carregarDoHash==="function")carregarDoHash();});</'+tag+'>';
-  docHTML = docHTML.replace('<'+'/body>', autoLoad + '<'+'/body>');
-  // Replace URL hash
-  docHTML = docHTML.replace(/window\.location\.href\.split\('#'\)\[0\]/g, '"file://escopo"');
-  // Embed data as hash
-  const fullHTML = '<'+'!DOCTYPE html>' + docHTML.split('<'+'!DOCTYPE html>').pop();
-  const blob = new Blob([fullHTML], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const dataURL = 'data:text/html;charset=utf-8,' + encodeURIComponent(fullHTML + '<'+tag+'>window.location.hash="escopo='+encoded+'";</'+tag+'>');
-  const a = document.createElement('a');
-  const slug = (document.getElementById('capa-company')?.textContent || 'CasaBorracha').replace(/\s+/g,'') + '_Escopo.html';
-  a.href = dataURL.length < 2000000 ? dataURL : url;
-  a.download = slug;
-  a.click();
-  URL.revokeObjectURL(url);
-  fecharExport();
-}
-
-// ── Init: carregar do hash se existir ──
-document.addEventListener('DOMContentLoaded', function() {
-  const loaded = carregarDoHash();
-  if (!loaded && !horasInited) {
-    // normal init
+// ─── INIT ───
+document.addEventListener('DOMContentLoaded', () => {
+  carregarDoHash();
+  renderSepTable();
+  const dataEl = document.getElementById('capa-data');
+  if (dataEl && !dataEl.textContent.trim()) {
+    dataEl.textContent = new Date().toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
   }
 });
-
-
-// ─── DRAG & DROP ATIVIDADES ───
-let _dragModId  = null;
-let _dragRowId  = null;
-
-function onRowDragStart(e) {
-  const tr = e.currentTarget;
-  _dragModId = tr.getAttribute('data-mod');
-  _dragRowId = tr.getAttribute('data-row');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', _dragRowId);
-  setTimeout(() => { if(tr) tr.classList.add('dragging'); }, 0);
-}
-
-function onRowDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  const tr = e.currentTarget;
-  if (!tr || tr.tagName !== 'TR') return;
-  const rect = tr.getBoundingClientRect();
-  tr.classList.remove('drag-over','drag-over-bottom');
-  if (e.clientY < rect.top + rect.height / 2) tr.classList.add('drag-over');
-  else tr.classList.add('drag-over-bottom');
-}
-
-function onRowDragLeave(e) {
-  const tr = e.currentTarget;
-  if (tr) tr.classList.remove('drag-over','drag-over-bottom');
-}
-
-function onRowDragEnd(e) {
-  document.querySelectorAll('.draggable-row').forEach(tr => {
-    tr.classList.remove('dragging','drag-over','drag-over-bottom');
-  });
-  _dragModId = null;
-  _dragRowId = null;
-}
-
-function onRowDrop(e) {
-  e.preventDefault();
-  const targetTr  = e.currentTarget;
-  if (targetTr) targetTr.classList.remove('drag-over','drag-over-bottom');
-
-  const targetModId = targetTr ? targetTr.getAttribute('data-mod') : null;
-  const targetRowId = targetTr ? targetTr.getAttribute('data-row') : null;
-
-  if (!_dragModId || !_dragRowId || _dragModId !== targetModId) return;
-  if (_dragRowId === targetRowId) return;
-
-  const mod = horasData.modulos.find(m => m.id === _dragModId);
-  if (!mod) return;
-
-  const fromIdx = mod.rows.findIndex(r => r.id === _dragRowId);
-  let   toIdx   = mod.rows.findIndex(r => r.id === targetRowId);
-  if (fromIdx === -1 || toIdx === -1) return;
-
-  const rect = targetTr ? targetTr.getBoundingClientRect() : null;
-  const insertBefore = rect ? e.clientY < rect.top + rect.height / 2 : true;
-
-  const [moved] = mod.rows.splice(fromIdx, 1);
-  const adjustedTo = mod.rows.findIndex(r => r.id === targetRowId);
-  mod.rows.splice(insertBefore ? adjustedTo : adjustedTo + 1, 0, moved);
-
-  saveData();
-  renderAll();
-}
-
-document.addEventListener('DOMContentLoaded', () => { renderSepTable(); });
 </script>
 </body>
 </html>
