@@ -3936,67 +3936,215 @@ function gerarDocHTML() {
   const RESP_C = {'Consultor':'#2563EB','TI-Cliente':'#16A34A','TI+Consultoria':'#7C3AED','Diretoria Cliente':'#DC2626'};
   const RESP_L = {'Consultor':'#DBEAFE','TI-Cliente':'#DCFCE7','TI+Consultoria':'#F3E8FF','Diretoria Cliente':'#FEE2E2'};
 
-  // ── Gantt em grade ──
+  // ── Cronograma em Grade Profissional ──
   function buildGantt() {
-    const withDates = allRows.filter(r=>r.dt_ini&&r.dt_fim);
-    if (!withDates.length) return '<p style="color:#94A3B8;font-style:italic;padding:12px">Sem datas definidas.</p>';
-    const dates = withDates.flatMap(r=>[new Date(r.dt_ini),new Date(r.dt_fim)]);
-    const minD  = new Date(new Date(Math.min(...dates)).getFullYear(), new Date(Math.min(...dates)).getMonth(), 1);
-    const maxD  = new Date(new Date(Math.max(...dates)).getFullYear(), new Date(Math.max(...dates)).getMonth(), 1);
+    const withDates = allRows.filter(r => r.dt_ini && r.dt_fim);
+    if (!withDates.length)
+      return '<p style="color:#94A3B8;font-style:italic;padding:12px">Sem datas definidas.</p>';
+
+    const RESP_C = {
+      'Consultor':'#2563EB', 'TI-Cliente':'#16A34A',
+      'TI+Consultoria':'#7C3AED', 'Diretoria Cliente':'#DC2626'
+    };
+    const RESP_BG = {
+      'Consultor':'#DBEAFE', 'TI-Cliente':'#DCFCE7',
+      'TI+Consultoria':'#F3E8FF', 'Diretoria Cliente':'#FEE2E2'
+    };
+
+    // Date helpers
+    const parseDate = s => new Date(s + 'T00:00:00');
+    const fmtDate   = s => parseDate(s).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+    const diffDays  = (s,e) => Math.round((parseDate(e)-parseDate(s))/(1000*60*60*24))+1;
+    const today     = new Date(); today.setHours(0,0,0,0);
+
+    // Month range
+    const allD  = withDates.flatMap(r => [parseDate(r.dt_ini), parseDate(r.dt_fim)]);
+    const minD  = new Date(Math.min(...allD)); minD.setDate(1);
+    const maxD  = new Date(Math.max(...allD)); maxD.setDate(1);
     const months = [];
     let cur = new Date(minD);
-    while (cur <= maxD) { months.push(new Date(cur)); cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
-    const todayKey = new Date().getFullYear()+'-'+new Date().getMonth();
-    function isActive(row, m) {
-      if (!row.dt_ini||!row.dt_fim) return false;
-      const s=new Date(row.dt_ini), e=new Date(row.dt_fim);
-      const ms=new Date(m.getFullYear(),m.getMonth(),1), me=new Date(m.getFullYear(),m.getMonth()+1,0);
-      return s<=me && e>=ms;
+    while (cur <= maxD) {
+      months.push(new Date(cur));
+      cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
     }
-    const mw = Math.max(26, Math.floor(540/months.length));
-    let t = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%">';
-    t += '<thead><tr style="background:#1A3E6E;color:#fff"><th style="padding:7px 10px;text-align:left;min-width:200px;border-right:2px solid #0F2A4A">Atividade / Responsável</th>';
+    const totalMs   = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0) - minD + 86400000;
+    const pctPos    = d => Math.max(0, Math.min(100, (d - minD) / totalMs * 100));
+    const pctWidth  = (s,e) => Math.max(0.8, (parseDate(e)+86400000 - parseDate(s)) / totalMs * 100);
+    const todayPct  = pctPos(today);
+    const showToday = todayPct >= 0 && todayPct <= 100;
+
+    const LABEL_W = 200;
+    const TL_W    = 560;
+
+    // ── Cabeçalho com meses ──
+    let monthHeaders = '';
     months.forEach(m => {
-      const isNow = (m.getFullYear()+'-'+m.getMonth())===todayKey;
-      const lbl   = m.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-      const yr    = String(m.getFullYear()).slice(2);
-      t += '<th style="padding:5px 3px;text-align:center;width:'+mw+'px;font-size:10px;'+(isNow?'background:#EA580C;':'')+'">'
-        + lbl+'<br><span style="font-size:9px;opacity:.8">'+yr+'</span>'+(isNow?'<br><span style="font-size:8px">▼</span>':'')+'</th>';
+      const mEnd  = new Date(m.getFullYear(), m.getMonth()+1, 0);
+      const start = Math.max(0, pctPos(m));
+      const end   = Math.min(100, pctPos(mEnd) + (86400000/totalMs*100));
+      const w     = end - start;
+      const label = m.toLocaleDateString('pt-BR',{month:'short'}).toUpperCase().replace('.','')
+                  + '. ' + String(m.getFullYear()).slice(2);
+      monthHeaders += `<div style="position:absolute;left:${start}%;width:${w}%;text-align:center;
+        font-size:10px;font-weight:700;color:#fff;overflow:hidden;padding:4px 2px;
+        border-right:1px solid #2563EB44">${label}</div>`;
     });
-    t += '</tr></thead><tbody>';
-    let lastMod='', seq=1;
-    withDates.forEach((row,ri) => {
-      if (row.modTitle!==lastMod) {
-        lastMod=row.modTitle;
-        t += '<tr style="background:'+row.modColor+'18"><td colspan="'+(months.length+1)+'" style="padding:5px 10px;font-weight:700;font-size:11px;color:'+row.modColor+';border-bottom:1px solid '+row.modColor+'44">'+escH(row.modTitle)+'</td></tr>';
+
+    // ── Linhas de mês no grid ──
+    let monthLines = '';
+    months.forEach(m => {
+      const x = pctPos(m);
+      monthLines += `<div style="position:absolute;left:${x}%;top:0;bottom:0;
+        border-left:1px solid #E2E8F0;pointer-events:none"></div>`;
+    });
+
+    // ── Today line ──
+    const todayLine = showToday
+      ? `<div style="position:absolute;left:${todayPct}%;top:0;bottom:0;
+          width:2px;background:#DC2626;opacity:.7;z-index:5;pointer-events:none">
+          <div style="position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+            font-size:9px;color:#DC2626;font-weight:700;white-space:nowrap">hoje</div>
+        </div>` : '';
+
+    // ── Construir tabela ──
+    let rows = '';
+    let lastMod = '';
+    let seq = 1;
+
+    withDates.forEach((row, ri) => {
+      // Separador de módulo
+      if (row.modTitle !== lastMod) {
+        lastMod = row.modTitle;
+        rows += `<tr>
+          <td colspan="2" style="background:${row.modColor};color:#fff;
+            padding:6px 12px;font-weight:700;font-size:11px">
+            ${escH(row.modTitle)}
+          </td>
+          <td style="background:${row.modColor}22;border-bottom:2px solid ${row.modColor}55;
+            padding:0;height:26px;position:relative">
+            ${monthLines}${todayLine}
+          </td>
+        </tr>`;
       }
-      const c=RESP_C[row.resp]||'#2563EB', cl=RESP_L[row.resp]||'#DBEAFE';
-      t += '<tr style="background:'+(ri%2===0?'#fff':'#FAFAFA')+'">'
-        + '<td style="padding:5px 10px;border-bottom:1px solid #F0F0F0;border-right:2px solid #E2E8F0">'
-        + '<div style="font-weight:600;color:#1E293B;font-size:11px">'+(seq++)+'. '+escH(row.ativ)+'</div>'
-        + '<div style="margin-top:2px"><span style="background:'+cl+';color:'+c+';padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">'+escH(row.resp)+'</span>'
-        + ' <span style="font-size:10px;color:#94A3B8">'+row.horas+'h</span>'+(row.ok?' <span style="color:#16A34A;font-weight:700">✓</span>':'')+'</div></td>';
-      months.forEach(m => {
-        const active=isActive(row,m), isNow=(m.getFullYear()+'-'+m.getMonth())===todayKey;
-        t += '<td style="text-align:center;height:32px;border-bottom:1px solid #F0F0F0;border-left:1px solid '+(isNow?'#EA580C':'#F0F0F0')+';'+(isNow?'background:#FFF7ED;':'')+'padding:0">';
-        if (active) t += '<div style="width:100%;height:100%;min-height:32px;background:'+(row.ok?c+'55':c)+';display:flex;align-items:center;justify-content:center">'+(months.filter(mm=>isActive(row,mm)).length<=2?'<span style="font-size:9px;font-weight:700;color:'+(row.ok?c:'#fff')+'">'+row.horas+'h</span>':'')+'</div>';
-        t += '</td>';
-      });
-      t += '</tr>';
+
+      const c    = RESP_C[row.resp]  || '#2563EB';
+      const bg   = RESP_BG[row.resp] || '#DBEAFE';
+      const days = diffDays(row.dt_ini, row.dt_fim);
+      const bx   = pctPos(parseDate(row.dt_ini));
+      const bw   = pctWidth(row.dt_ini, row.dt_fim);
+      const done = row.ok;
+      const rowBg= ri % 2 === 0 ? '#fff' : '#FAFAFA';
+
+      // Bar com datas nos extremos
+      const barContent = bw > 12
+        ? `<span style="position:absolute;left:3px;top:50%;transform:translateY(-50%);
+             font-size:8px;color:${done?c:'#fff'};font-weight:600;white-space:nowrap">
+             ${fmtDate(row.dt_ini)}</span>
+           <span style="position:absolute;right:3px;top:50%;transform:translateY(-50%);
+             font-size:8px;color:${done?c:'#fff'};font-weight:600;white-space:nowrap">
+             ${fmtDate(row.dt_fim)}</span>`
+        : `<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+             font-size:8px;color:${done?c:'#fff'};font-weight:700">${row.horas}h</span>`;
+
+      rows += `<tr style="background:${rowBg}">
+        <td style="padding:5px 10px;border-bottom:1px solid #F0F0F0;width:${LABEL_W}px;
+          vertical-align:middle">
+          <div style="font-size:11px;font-weight:600;color:${done?'#94A3B8':'#1E293B'};
+            ${done?'text-decoration:line-through':''}">
+            ${(seq++)}. ${escH(row.ativ.length>36 ? row.ativ.slice(0,34)+'…' : row.ativ)}
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;margin-top:2px;flex-wrap:wrap">
+            <span style="background:${bg};color:${c};padding:1px 5px;border-radius:6px;
+              font-size:9px;font-weight:700">${escH(row.resp)}</span>
+            <span style="color:#94A3B8;font-size:9px">${days}d · ${row.horas}h</span>
+            ${done ? '<span style="color:#16A34A;font-size:10px;font-weight:700">✓</span>' : ''}
+          </div>
+        </td>
+        <td style="padding:4px 8px;border-bottom:1px solid #F0F0F0;width:85px;
+          white-space:nowrap;font-size:10px;color:#64748B;vertical-align:middle;
+          text-align:center">
+          <div style="font-weight:600">${fmtDate(row.dt_ini)}</div>
+          <div style="color:#94A3B8">↓</div>
+          <div style="font-weight:600">${fmtDate(row.dt_fim)}</div>
+        </td>
+        <td style="padding:0;border-bottom:1px solid #F0F0F0;height:38px;
+          position:relative;width:${TL_W}px">
+          ${monthLines}
+          ${showToday ? todayLine : ''}
+          <div style="position:absolute;left:${bx}%;width:${bw}%;top:7px;
+            height:24px;border-radius:4px;
+            background:${done ? bg : c};
+            border:1px solid ${c};
+            opacity:${done?'0.7':'1'};
+            box-shadow:0 1px 3px rgba(0,0,0,.15)">
+            ${barContent}
+          </div>
+        </td>
+      </tr>`;
     });
-    // Totais
-    t += '<tr style="background:#F1F5F9;font-weight:700"><td style="padding:6px 10px;font-size:11px;color:#1A3E6E;border-right:2px solid #E2E8F0;border-top:2px solid #E2E8F0">Atividades por mês</td>';
-    months.forEach(m => {
-      const cnt=withDates.filter(r=>isActive(r,m)).length, isNow=(m.getFullYear()+'-'+m.getMonth())===todayKey;
-      t += '<td style="text-align:center;font-size:11px;color:'+(cnt>3?'#DC2626':cnt>1?'#EA580C':'#16A34A')+';border-left:1px solid #E2E8F0;border-top:2px solid #E2E8F0;'+(isNow?'background:#FFF7ED;':'')+'">'+(cnt||'')+'</td>';
+
+    // ── Linha total ──
+    rows += `<tr style="background:#EFF6FF">
+      <td style="padding:6px 10px;font-weight:700;color:#1A3E6E;font-size:11px">
+        Total — ${withDates.length} atividades
+      </td>
+      <td style="padding:6px 8px;text-align:center;font-size:10px;color:#64748B">
+        ${fmtDate(withDates.reduce((a,r) => r.dt_ini < a ? r.dt_ini : a, withDates[0].dt_ini))}
+        <br>→<br>
+        ${fmtDate(withDates.reduce((a,r) => r.dt_fim > a ? r.dt_fim : a, withDates[0].dt_fim))}
+      </td>
+      <td style="padding:6px 10px;position:relative">
+        ${monthLines}
+        ${showToday ? todayLine : ''}
+        <span style="font-size:10px;color:#EA580C;font-weight:700">
+          ${grand}h · ${Math.round(diffDays(
+            withDates.reduce((a,r)=>r.dt_ini<a?r.dt_ini:a, withDates[0].dt_ini),
+            withDates.reduce((a,r)=>r.dt_fim>a?r.dt_fim:a, withDates[0].dt_fim)
+          ) / 7)} semanas
+        </span>
+      </td>
+    </tr>`;
+
+    // ── Montar tabela completa ──
+    const thead = `<thead>
+      <tr style="background:#1A3E6E">
+        <th style="padding:8px 10px;text-align:left;color:#fff;font-size:11px;
+          width:${LABEL_W}px">Atividade / Responsável</th>
+        <th style="padding:8px 8px;color:#fff;font-size:11px;width:85px;
+          text-align:center">Início → Fim</th>
+        <th style="padding:0;width:${TL_W}px;position:relative;height:30px">
+          <div style="position:relative;height:30px;background:#1A3E6E">
+            ${monthHeaders}
+          </div>
+        </th>
+      </tr>
+    </thead>`;
+
+    let html2 = `<div style="overflow-x:auto;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden">
+      <table style="border-collapse:collapse;width:100%;min-width:${LABEL_W+85+TL_W}px">
+        ${thead}<tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+    // Legenda
+    html2 += `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;
+      padding-top:10px;border-top:1px solid #E2E8F0;font-size:10px;color:#374151">`;
+    Object.entries(RESP_C).forEach(([k,v]) => {
+      html2 += `<div style="display:flex;align-items:center;gap:5px">
+        <div style="width:14px;height:10px;background:${v};border-radius:2px"></div>${k}
+      </div>`;
     });
-    t += '</tr></tbody></table></div>';
-    t += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid #E2E8F0;font-size:10px">';
-    Object.entries(RESP_C).forEach(([k,v]) => t += '<div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:10px;background:'+v+';border-radius:2px"></div>'+k+'</div>');
-    t += '<div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:10px;background:#EA580C;border-radius:2px"></div>Mês atual</div>';
-    t += '</div>';
-    return t;
+    if (showToday) html2 += `<div style="display:flex;align-items:center;gap:5px">
+      <div style="width:2px;height:12px;background:#DC2626"></div>Data atual
+    </div>`;
+    html2 += `<div style="display:flex;align-items:center;gap:5px">
+      <div style="width:14px;height:10px;background:#94A3B8;border-radius:2px;opacity:.5"></div>
+      Concluído (OK Cliente)
+    </div></div>`;
+
+    return html2;
   }
+
 
   // ── Tabela horas ──
   function buildHoras() {
@@ -4202,8 +4350,8 @@ ul.list li{padding:5px 12px;border-bottom:1px solid #E2E8F0;font-size:12px;displ
 
 
 <div class="section pb">
-<div class="sec-num">Seção 5</div><div class="sec-title">Cronograma em Grade</div>
-<p class="sec-text">Cada célula colorida indica que a atividade está ativa naquele mês. A coluna laranja ▼ indica o mês atual.</p>
+<div class="sec-num">Seção 5</div><div class="sec-title">Cronograma de Execução</div>
+<p class="sec-text">Barras mostram o período de execução de cada atividade. As datas de início e fim estão visíveis em cada barra. A linha vermelha indica a data atual.</p>
 ` + ganttHTML + `
 </div>
 
